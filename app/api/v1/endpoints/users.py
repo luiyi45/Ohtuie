@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
@@ -28,10 +28,12 @@ async def create_user(
     *,
     db: AsyncSession = Depends(deps.get_db),
     user_in: schemas.UserCreate,
-    current_user: models.User = Depends(deps.get_current_active_superuser),
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
 ) -> Any:
     """
     Create new user.
+    Everyone can create their own 'user' account.
+    Only superusers can create other accounts with different roles.
     """
     user = await crud.user.get_by_email(db, email=user_in.email)
     if user:
@@ -39,6 +41,11 @@ async def create_user(
             status_code=400,
             detail="The user with this username already exists in the system.",
         )
+    
+    # If not an admin, force role to 'user'
+    if not current_user or current_user.role != "admin":
+        user_in.role = "user"
+        
     user = await crud.user.create(db, obj_in=user_in)
     return user
 
@@ -106,6 +113,8 @@ async def read_user_by_id(
     Get a specific user by id.
     """
     user = await crud.user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     if user == current_user:
         return user
     if current_user.role != "admin":

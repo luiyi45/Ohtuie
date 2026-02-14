@@ -33,9 +33,12 @@ async def login_access_token(
             ),
             "token_type": "bearer",
         }
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
-        with open("login_error.log", "w") as f:
-            f.write(f"Error: {e}\n")
+        with open("login_error.log", "a") as f:
+            f.write(f"\n[{datetime.utcnow()}] Error: {e}\n")
             traceback.print_exc(file=f)
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+

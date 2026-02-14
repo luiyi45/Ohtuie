@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,3 +43,21 @@ async def get_current_active_superuser(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+async def get_current_user_optional(
+    db: AsyncSession = Depends(get_db),
+    token: Optional[str] = Depends(reusable_oauth2)
+) -> Optional[models.User]:
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        token_data = schemas.TokenPayload(**payload)
+    except (JWTError, ValidationError):
+        return None
+    user = await crud.user.get(db, id=token_data.sub)
+    if not user or not user.is_active:
+        return None
+    return user

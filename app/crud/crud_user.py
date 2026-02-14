@@ -25,6 +25,19 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         await db.refresh(db_obj)
         return db_obj
 
+    async def update(
+        self, db: AsyncSession, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]
+    ) -> User:
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.model_dump(exclude_unset=True)
+        if "password" in update_data:
+            hashed_password = get_password_hash(update_data["password"])
+            del update_data["password"]
+            update_data["hashed_password"] = hashed_password
+        return await super().update(db, db_obj=db_obj, obj_in=update_data)
+
     async def authenticate(self, db: AsyncSession, *, email: str, password: str) -> Optional[User]:
         user = await self.get_by_email(db, email=email)
         if not user:
