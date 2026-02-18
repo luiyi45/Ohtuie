@@ -14,6 +14,12 @@ class Settings(BaseSettings):
             return v.replace("postgresql://", "postgresql+asyncpg://", 1)
         return v
 
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str
+    SMTP_PASSWORD: str
+    EMAILS_FROM_NAME: str = "OHTUIE Management"
+
     class Config:
         env_file = ".env"
 

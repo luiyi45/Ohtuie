@@ -1,4 +1,7 @@
 import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from jinja2 import Environment, FileSystemLoader
 from app.core.config import settings
 
@@ -13,12 +16,24 @@ def send_password_recovery_email(email_to: str, full_name: str, code: str):
         recovery_code=code
     )
     
-    # MOCK: In a real app, you would use a library like fastapi-mail or smtplib
-    print(f"DEBUG: Sending email to {email_to}")
-    print(f"DEBUG: Content excerpt: ...{full_name}, your code is {code}...")
+    # Create Message
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Código de recuperación - OHTUIE"
+    message["From"] = f"{settings.EMAILS_FROM_NAME} <{settings.SMTP_USER}>"
+    message["To"] = email_to
     
-    # Save to a file for verification during development
-    with open(f"recovery_email_{email_to}.html", "w", encoding="utf-8") as f:
-        f.write(html_content)
+    part = MIMEText(html_content, "html")
+    message.attach(part)
+    
+    try:
+        # Connect and send
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            server.starttls()  # Secure the connection
+            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            server.sendmail(settings.SMTP_USER, email_to, message.as_string())
         
-    return True
+        print(f"DEBUG: Email sent successfully to {email_to}")
+        return True
+    except Exception as e:
+        print(f"ERROR: Failed to send email to {email_to}: {e}")
+        return False
