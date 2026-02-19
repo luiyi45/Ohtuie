@@ -8,6 +8,7 @@ CREATE TABLE public.users (
     email VARCHAR(255) NOT NULL UNIQUE,
     hashed_password VARCHAR(255) NOT NULL,
     full_name VARCHAR(100),
+    birthday DATE,
     role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'user')),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

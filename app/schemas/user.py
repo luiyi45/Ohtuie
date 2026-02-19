@@ -1,13 +1,14 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr, ConfigDict
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, date
 
 # Shared properties
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
     full_name: Optional[str] = None
+    birthday: Optional[date] = None
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
@@ -33,3 +34,9 @@ class User(UserInDBBase):
 # Additional properties stored in DB
 class UserInDB(UserInDBBase):
     hashed_password: str
+
+class UserRegistration(BaseModel):
+    user: UserCreate
+    cycle_start_date: Optional[date] = None
+    cycle_duration: Optional[int] = 28
+    period_duration: Optional[int] = 5

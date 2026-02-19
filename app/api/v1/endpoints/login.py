@@ -23,8 +23,20 @@ async def login_access_token(
             db, email=form_data.username, password=form_data.password
         )
         if not user:
+            await crud.audit_log.create(
+                db, 
+                event_type="failed_login", 
+                description=f"Login fallido para el email: {form_data.username}",
+                metadata_json={"email": form_data.username}
+            )
             raise HTTPException(status_code=400, detail="Incorrect email or password")
         elif not user.is_active:
+            await crud.audit_log.create(
+                db, 
+                event_type="failed_login", 
+                description=f"Usuario inactivo intentó ingresar: {form_data.username}",
+                metadata_json={"email": form_data.username, "user_id": str(user.id)}
+            )
             raise HTTPException(status_code=400, detail="Inactive user")
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         return {

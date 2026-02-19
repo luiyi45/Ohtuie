@@ -86,21 +86,31 @@ async def read_user_me(
 async def create_user_open(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    password: str = Body(...),
-    email: EmailStr = Body(...),
-    full_name: str = Body(None),
+    reg_in: schemas.UserRegistration,
 ) -> Any:
     """
     Create new user without needing to be logged in.
+    Initializes the user and their first cycle if data is provided.
     """
-    user = await crud.user.get_by_email(db, email=email)
+    user = await crud.user.get_by_email(db, email=reg_in.user.email)
     if user:
         raise HTTPException(
             status_code=400,
             detail="The user with this username already exists in the system",
         )
-    user_in = schemas.UserCreate(password=password, email=email, full_name=full_name)
-    user = await crud.user.create(db, obj_in=user_in)
+    
+    # Force role to user for open registration
+    reg_in.user.role = "user"
+    user = await crud.user.create(db, obj_in=reg_in.user)
+    
+    # If cycle data is provided, create the first cycle
+    if reg_in.cycle_start_date:
+        cycle_in = schemas.CycleCreate(
+            start_date=reg_in.cycle_start_date,
+            notes="Registro inicial"
+        )
+        await crud.cycle.create_with_owner(db, obj_in=cycle_in, user_id=user.id)
+        
     return user
 
 @router.get("/{user_id}", response_model=schemas.User)
