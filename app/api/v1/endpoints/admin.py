@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, text
 
 from app import crud, models, schemas
 from app.api import deps
@@ -97,3 +97,17 @@ async def get_statistics(
         "user_registrations_last_7_days": user_registrations_last_7_days,
         "age_distribution": age_distribution,
     }
+
+@router.post("/verify-password", response_model=schemas.Msg)
+async def verify_admin_password(
+    password: str = Body(..., embed=True),
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Verify admin password for sensitive actions.
+    """
+    from app.core.security import verify_password
+    if not verify_password(password, current_user.hashed_password):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Contraseña incorrecta")
+    return {"msg": "Password verified"}

@@ -21,7 +21,8 @@ async def read_users(
     Retrieve users.
     """
     users = await crud.user.get_multi(db, skip=skip, limit=limit)
-    return users
+    # Filter out current user (admin) from the list
+    return [u for u in users if u.id != current_user.id]
 
 @router.post("/", response_model=schemas.User)
 async def create_user(
@@ -155,4 +156,28 @@ async def delete_user(
             detail="Users cannot delete themselves",
         )
     user = await crud.user.remove(db, id=user_id)
+    return user
+
+@router.put("/{user_id}", response_model=schemas.User)
+async def update_user(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    user_id: UUID,
+    user_in: schemas.UserUpdate,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Update a user.
+    """
+    user = await crud.user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="The user with this id does not exist in the system",
+        )
+    
+    # Check if the user is trying to change their own role (optional but good)
+    # However, UserUpdate doesn't have role anyway.
+    
+    user = await crud.user.update(db, db_obj=user, obj_in=user_in)
     return user
