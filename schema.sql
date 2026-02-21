@@ -10,6 +10,8 @@ CREATE TABLE public.users (
     full_name VARCHAR(100),
     birthday DATE,
     role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'user')),
+    cycle_duration INTEGER DEFAULT 28,
+    period_duration INTEGER DEFAULT 5,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

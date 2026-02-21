@@ -90,17 +90,19 @@ async def get_prediction(
          return {"message": "Not enough data for predictions"}
     
     last_cycle = cycles[0]
-    # Simple logic: 28 days cycle
-    avg_cycle_days = 28 
+    # Use user-specific settings
+    avg_cycle_days = current_user.cycle_duration
     
     next_period_start = last_cycle.start_date + timedelta(days=avg_cycle_days)
     ovulation_date = next_period_start - timedelta(days=14)
-    fertile_window_start = ovulation_date - timedelta(days=3)
-    fertile_window_end = ovulation_date + timedelta(days=3)
+    # Fertile window is usually 5 days before ovulation plus the day of ovulation
+    fertile_window_start = ovulation_date - timedelta(days=5)
+    fertile_window_end = ovulation_date + timedelta(days=1)
     
     return {
         "next_period_start": next_period_start,
         "ovulation_date": ovulation_date,
+        "period_duration": current_user.period_duration,
         "fertile_window": {
             "start": fertile_window_start,
             "end": fertile_window_end

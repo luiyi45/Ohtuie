@@ -100,9 +100,11 @@ async def create_user_open(
             detail="The user with this username already exists in the system",
         )
     
-    # Force role to user for open registration
-    reg_in.user.role = "user"
-    user = await crud.user.create(db, obj_in=reg_in.user)
+    user_in = reg_in.user
+    user_in.role = "user"
+    user_in.cycle_duration = reg_in.cycle_duration
+    user_in.period_duration = reg_in.period_duration
+    user = await crud.user.create(db, obj_in=user_in)
     
     # If cycle data is provided, create the first cycle
     if reg_in.cycle_start_date:

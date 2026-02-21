@@ -1,0 +1,45 @@
+\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 333, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1572, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1943, in _execute_context
+    self._handle_dbapi_exception(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2124, in _handle_dbapi_exception
+    util.raise_(
+    ^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\util\compat.py", line 208, in raise_
+    raise exception
+    ^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1900, in _execute_context
+    self.dialect.do_execute(
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 736, in do_execute
+    cursor.execute(statement, parameters)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 479, in execute
+    self._adapt_connection.await_(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 68, in await_only
+    return current.driver.switch(awaitable)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 121, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 408, in _prepare_and_execute
+    await adapt_connection._start_transaction()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 716, in _start_transaction
+    self._handle_exception(error)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SENA\Documents\OHTUIE\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 682, in _handle_exception
+    raise translated_error from error
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.DBAPIError: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.ConnectionDoesNotExistError'>: connection was closed in the middle of operation
+[SQL: SELECT users.id, users.email, users.hashed_password, users.full_name, users.birthday, users.role, users.is_active, users.created_at, users.updated_at 
+FROM users 
+WHERE users.email = %s]
+[parameters: ('admin@ohtuie.com',)]
+(Background on this error at: https://sqlalche.me/e/14/dbapi)

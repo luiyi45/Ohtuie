@@ -9,12 +9,16 @@ class UserBase(BaseModel):
     is_active: Optional[bool] = True
     full_name: Optional[str] = None
     birthday: Optional[date] = None
+    cycle_duration: Optional[int] = 28
+    period_duration: Optional[int] = 5
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
     email: EmailStr
     password: str
     role: str = "user"
+    cycle_duration: int = 28
+    period_duration: int = 5
 
 # Properties to receive via API on update
 class UserUpdate(UserBase):
