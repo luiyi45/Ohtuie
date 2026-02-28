@@ -84,14 +84,25 @@ async def get_prediction(
     Get predictions for period, ovulation, and fertile window.
     """
     # Logic for prediction
-    # 1. Get last cycle
-    cycles = await crud.cycle.get_multi_by_user(db=db, user_id=current_user.id, limit=1)
+    # 1. Get all cycles to calculate average duration
+    cycles = await crud.cycle.get_multi_by_user(db=db, user_id=current_user.id, limit=100)
     if not cycles:
          return {"message": "Not enough data for predictions"}
     
-    last_cycle = cycles[0]
-    # Use user-specific settings
-    avg_cycle_days = current_user.cycle_duration
+    # Calculate average cycle duration if we have at least 2 cycles
+    avg_cycle_days = current_user.cycle_duration or 28
+    if len(cycles) >= 2:
+        durations = []
+        for i in range(len(cycles) - 1):
+            # Cycles are ordered by start_date desc, so cycles[i] is newer than cycles[i+1]
+            diff = (cycles[i].start_date - cycles[i+1].start_date).days
+            if 15 < diff < 45: # Sanity check for cycle length
+                durations.append(diff)
+        
+        if durations:
+            avg_cycle_days = sum(durations) // len(durations)
+
+    last_cycle = cycles[0] # Most recent cycle
     
     next_period_start = last_cycle.start_date + timedelta(days=avg_cycle_days)
     ovulation_date = next_period_start - timedelta(days=14)
@@ -102,7 +113,8 @@ async def get_prediction(
     return {
         "next_period_start": next_period_start,
         "ovulation_date": ovulation_date,
-        "period_duration": current_user.period_duration,
+        "period_duration": current_user.period_duration or 5,
+        "avg_cycle_duration": avg_cycle_days,
         "fertile_window": {
             "start": fertile_window_start,
             "end": fertile_window_end

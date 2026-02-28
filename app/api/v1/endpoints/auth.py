@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,8 +21,20 @@ async def recover_password(
     """
     user = await crud.user.get_by_email(db, email=email)
     if not user:
-        # We return 200 even if user doesn't exist for security (avoid enumeration)
-        return {"msg": "If the email is registered, a recovery code has been sent."}
+        raise HTTPException(
+            status_code=404,
+            detail="The user with this email does not exist in the system.",
+        )
+    
+    # Rate limit check: max 5 recoveries per 24 hours
+    one_day_ago = datetime.utcnow() - timedelta(days=1)
+    # Check tokens created for this user in the last 24h
+    token_count = await password_reset.get_count_by_user_after(db, user_id=user.id, after=one_day_ago)
+    if token_count >= 5:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many password recovery requests. Please try again tomorrow.",
+        )
     
     # Generate code
     token_obj = await password_reset.create_token(db, user_id=user.id)

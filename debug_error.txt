@@ -1,21 +1,6 @@
-Error: The asyncio extension requires an async driver to be used. The loaded 'psycopg2' is not async.
-Traceback (most recent call last):
-  File "C:\Users\SENA\Documents\OHTUIE\verify_app.py", line 14, in <module>
-    from app.main import app
-  File "C:\Users\SENA\Documents\OHTUIE\app\main.py", line 4, in <module>
-    from app.api.v1.api import api_router
-  File "C:\Users\SENA\Documents\OHTUIE\app\api\v1\api.py", line 3, in <module>
-    from app.api.v1.endpoints import login, users, cycles, utils
-  File "C:\Users\SENA\Documents\OHTUIE\app\api\v1\endpoints\login.py", line 8, in <module>
-    from app.api import deps
-  File "C:\Users\SENA\Documents\OHTUIE\app\api\deps.py", line 11, in <module>
-    from app.db.session import get_db
-  File "C:\Users\SENA\Documents\OHTUIE\app\db\session.py", line 5, in <module>
-    engine = create_async_engine(settings.DATABASE_URL, echo=True)
-  File "C:\Users\SENA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\sqlalchemy\ext\asyncio\engine.py", line 121, in create_async_engine
-    return AsyncEngine(sync_engine)
-  File "C:\Users\SENA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\sqlalchemy\ext\asyncio\engine.py", line 1035, in __init__
-    raise exc.InvalidRequestError(
-    ...<2 lines>...
-    )
-sqlalchemy.exc.InvalidRequestError: The asyncio extension requires an async driver to be used. The loaded 'psycopg2' is not async.
+Created user: to_be_deleted@example.com (ID: 3283f380-f12f-40d8-a438-7f878289dd68)
+Added cycle for user
+Attempting to block user 3283f380-f12f-40d8-a438-7f878289dd68...
+Update SUCCESS: is_active=False
+Attempting to delete user 3283f380-f12f-40d8-a438-7f878289dd68...
+Delete SUCCESS: User to_be_deleted@example.com removed

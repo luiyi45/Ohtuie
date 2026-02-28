@@ -1,12 +1,12 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from uuid import UUID
 from datetime import datetime, date
 
 # Shared properties
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
-    is_active: Optional[bool] = True
+    is_active: Optional[bool] = None
     full_name: Optional[str] = None
     birthday: Optional[date] = None
     cycle_duration: Optional[int] = 28
@@ -15,14 +15,14 @@ class UserBase(BaseModel):
 # Properties to receive via API on creation
 class UserCreate(UserBase):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=6)
     role: str = "user"
-    cycle_duration: int = 28
-    period_duration: int = 5
+    cycle_duration: Optional[int] = 28
+    period_duration: Optional[int] = 5
 
 # Properties to receive via API on update
 class UserUpdate(UserBase):
-    password: Optional[str] = None
+    password: Optional[str] = Field(None, min_length=6)
 
 class UserInDBBase(UserBase):
     id: Optional[UUID] = None

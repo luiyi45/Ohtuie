@@ -8,7 +8,29 @@ from app.models.password_reset import PasswordResetToken
 from app.models.user import User
 
 class CRUDPasswordReset:
+    async def get_count_by_user_after(self, db: AsyncSession, *, user_id: str, after: datetime) -> int:
+        from sqlalchemy import func
+        query = select(func.count(PasswordResetToken.id)).filter(
+            PasswordResetToken.user_id == user_id,
+            PasswordResetToken.created_at >= after
+        )
+        result = await db.execute(query)
+        return result.scalar() or 0
+
+    async def cleanup_tokens(self, db: AsyncSession) -> None:
+        from sqlalchemy import delete
+        # Delete tokens older than 24 hours
+        one_day_ago = datetime.utcnow() - timedelta(days=1)
+        query = delete(PasswordResetToken).where(
+            PasswordResetToken.created_at < one_day_ago
+        )
+        await db.execute(query)
+        await db.commit()
+
     async def create_token(self, db: AsyncSession, *, user_id: str) -> PasswordResetToken:
+        # Periodic cleanup
+        await self.cleanup_tokens(db)
+        
         code = "".join(random.choices(string.digits, k=6))
         expires_at = datetime.utcnow() + timedelta(minutes=15)
         
@@ -42,5 +64,6 @@ class CRUDPasswordReset:
             user_result = await db.execute(select(User).filter(User.id == token.user_id))
             return user_result.scalars().first()
         return None
+
 
 password_reset = CRUDPasswordReset()

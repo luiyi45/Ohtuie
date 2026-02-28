@@ -97,7 +97,7 @@ async def create_user_open(
     if user:
         raise HTTPException(
             status_code=400,
-            detail="The user with this username already exists in the system",
+            detail="El correo ya existe. Recupera tu cuenta",
         )
     
     user_in = reg_in.user

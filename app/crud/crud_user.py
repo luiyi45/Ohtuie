@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Union, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +21,8 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             full_name=obj_in.full_name,
             birthday=obj_in.birthday,
             role=obj_in.role,
+            cycle_duration=obj_in.cycle_duration,
+            period_duration=obj_in.period_duration,
         )
         db.add(db_obj)
         await db.commit()
@@ -43,8 +46,29 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         user = await self.get_by_email(db, email=email)
         if not user:
             return None
+            
+        # Check if account is locked
+        if user.locked_until and user.locked_until > datetime.utcnow():
+            return None # Locked
+            
         if not verify_password(password, user.hashed_password):
+            # Increment failed attempts
+            user.failed_login_attempts += 1
+            if user.failed_login_attempts >= 5:
+                # Lock account for 1 hour
+                user.locked_until = datetime.utcnow() + timedelta(hours=1)
+            
+            db.add(user)
+            await db.commit()
             return None
+            
+        # Authentication successful - reset failed attempts
+        if user.failed_login_attempts > 0 or user.locked_until:
+            user.failed_login_attempts = 0
+            user.locked_until = None
+            db.add(user)
+            await db.commit()
+            
         return user
 
 user = CRUDUser(User)
