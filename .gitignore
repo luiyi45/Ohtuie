@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables
+.env
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+cleanup_error.txt
+debug_error.txt
+debug_output.txt
+db_output.txt
+error_traceback.txt
+login_error.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific ignores
+tail.txt
+file_list.txt
+recovery_email_*.html
+debug_env.txt

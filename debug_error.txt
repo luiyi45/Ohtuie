@@ -1,6 +1,0 @@
-Created user: to_be_deleted@example.com (ID: 3283f380-f12f-40d8-a438-7f878289dd68)
-Added cycle for user
-Attempting to block user 3283f380-f12f-40d8-a438-7f878289dd68...
-Update SUCCESS: is_active=False
-Attempting to delete user 3283f380-f12f-40d8-a438-7f878289dd68...
-Delete SUCCESS: User to_be_deleted@example.com removed
