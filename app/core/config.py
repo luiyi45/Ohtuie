@@ -2,9 +2,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str
+    PROJECT_NAME: str = "OHTUIE"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str
+    SECRET_KEY: str = "placeholder_secret_key_change_me"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     DATABASE_URL: str | None = None
 
@@ -17,8 +17,8 @@ class Settings(BaseSettings):
 
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
-    SMTP_USER: str
-    SMTP_PASSWORD: str
+    SMTP_USER: str = "placeholder@gmail.com"
+    SMTP_PASSWORD: str = "placeholder_password"
     EMAILS_FROM_NAME: str = "OHTUIE Management"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

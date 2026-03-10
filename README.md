@@ -77,6 +77,26 @@ uvicorn app.main:app --reload
 ```
 The API will be available at `http://127.0.0.1:8000`. You can access the interactive documentation at `http://127.0.0.1:8000/docs`.
 
+## ☁️ Deployment on Railway
+
+This project is configured to be deployed on **Railway**.
+
+### 1. Requirements
+Ensure you have the following environment variables configured in the Railway dashboard:
+- `DATABASE_URL`: Your PostgreSQL connection string.
+- `SECRET_KEY`: A secure random string for JWT.
+- `PROJECT_NAME`: (Optional) The name of your project.
+- `PORT`: (Managed by Railway) The port the app will listen on.
+
+### 2. Automatic Configuration
+The project includes a `Procfile` that Railway uses to start the application with the correct host and port:
+```text
+web: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+```
+
+### 3. Verification
+Once deployed, you can verify the application status at `https://<your-project-url>.up.railway.app/`.
+
 ## 🔒 Security Note: .env Files
 
 If your `.env` file was already tracked by Git before being added to `.gitignore`, it will continue to be uploaded. To stop tracking it without deleting it locally, run:
