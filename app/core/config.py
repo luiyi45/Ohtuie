@@ -24,6 +24,14 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = "placeholder_password"
     EMAILS_FROM_NAME: str = "OHTUIE Management"
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()
+
+# Debug info for Railway (only prints names of variables found)
+import os
+if os.getenv("RAILWAY_ENVIRONMENT"):
+    print(f"--- Railway Startup Debug ---")
+    print(f"DATABASE_URL found in environment: {'DATABASE_URL' in os.environ}")
+    print(f"Settings.DATABASE_URL value is set: {settings.DATABASE_URL is not None}")
+    print(f"-----------------------------")
