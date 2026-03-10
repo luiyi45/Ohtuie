@@ -1,5 +1,5 @@
-from pydantic_settings import BaseSettings
-from pydantic import validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 
 class Settings(BaseSettings):
     PROJECT_NAME: str
@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     DATABASE_URL: str
 
-    @validator("DATABASE_URL", pre=True)
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
     def assemble_db_connection(cls, v: str | None) -> str:
         if isinstance(v, str) and v.startswith("postgresql://"):
             return v.replace("postgresql://", "postgresql+asyncpg://", 1)
@@ -20,7 +21,6 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str
     EMAILS_FROM_NAME: str = "OHTUIE Management"
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
