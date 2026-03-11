@@ -27,8 +27,7 @@ def send_password_recovery_email(email_to: str, full_name: str, code: str):
     
     try:
         # Connect and send
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.starttls()  # Secure the connection
+        with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT) as server:
             server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             server.sendmail(settings.SMTP_USER, email_to, message.as_string())
         

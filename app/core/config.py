@@ -19,7 +19,7 @@ class Settings(BaseSettings):
         return v
 
     SMTP_HOST: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
+    SMTP_PORT: int = 465
     SMTP_USER: str = "placeholder@gmail.com"
     SMTP_PASSWORD: str = "placeholder_password"
     EMAILS_FROM_NAME: str = "OHTUIE Management"

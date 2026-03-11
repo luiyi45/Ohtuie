@@ -40,11 +40,17 @@ async def recover_password(
     token_obj = await password_reset.create_token(db, user_id=user.id)
     
     # Send email
-    send_password_recovery_email(
+    email_success = send_password_recovery_email(
         email_to=user.email,
         full_name=user.full_name or "Usuario",
         code=token_obj.code
     )
+    
+    if not email_success:
+        raise HTTPException(
+            status_code=500,
+            detail="Error al enviar el correo de recuperación. Por favor, contacta al soporte o intenta más tarde."
+        )
     
     return {"msg": "Recovery code sent."}
 
