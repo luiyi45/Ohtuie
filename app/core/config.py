@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     SMTP_USER: str = "placeholder@gmail.com"
     SMTP_PASSWORD: str = "placeholder_password"
     EMAILS_FROM_NAME: str = "OHTUIE Management"
+    EMAILS_FROM_EMAIL: str = "ohtuiemanagement@gmail.com"
+    BREVO_API_KEY: str = "placeholder"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

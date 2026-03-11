@@ -1,7 +1,5 @@
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import httpx
 from jinja2 import Environment, FileSystemLoader
 from app.core.config import settings
 
@@ -9,55 +7,36 @@ from app.core.config import settings
 template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
 env = Environment(loader=FileSystemLoader(template_dir))
 
-def send_password_recovery_email(email_to: str, full_name: str, code: str):
+async def send_password_recovery_email(email_to: str, full_name: str, code: str):
     template = env.get_template("password_recovery.html")
     html_content = template.render(
         user_full_name=full_name,
         recovery_code=code
     )
     
-    # Create Message
-    message = MIMEMultipart("alternative")
-    message["Subject"] = "Código de recuperación - OHTUIE"
-    message["From"] = f"{settings.EMAILS_FROM_NAME} <{settings.SMTP_USER}>"
-    message["To"] = email_to
-    
-    part = MIMEText(html_content, "html")
-    message.attach(part)
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "api-key": settings.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    payload = {
+        "sender": {"name": settings.EMAILS_FROM_NAME, "email": settings.EMAILS_FROM_EMAIL},
+        "to": [{"email": email_to}],
+        "subject": "Código de recuperación - OHTUIE",
+        "htmlContent": html_content
+    }
     
     try:
-        # Try port 465 (SSL) first as configured
-        if settings.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_USER, email_to, message.as_string())
-        else:
-            # Try port 587 (STARTTLS) or others
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-                server.starttls()
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_USER, email_to, message.as_string())
-        
-        print(f"DEBUG: Email sent successfully to {email_to}")
-        return True
-    except Exception as e:
-        print(f"ERROR: Failed to send email to {email_to} on port {settings.SMTP_PORT}: {e}")
-        # Fallback to port 587 if 465 failed and vice versa (common issue)
-        try:
-            fallback_port = 587 if settings.SMTP_PORT == 465 else 465
-            print(f"DEBUG: Attempting fallback to port {fallback_port}")
-            if fallback_port == 465:
-                # This check is just for safety, usually fallback is to 587
-                with smtplib.SMTP_SSL(settings.SMTP_HOST, 465, timeout=10) as server:
-                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                    server.sendmail(settings.SMTP_USER, email_to, message.as_string())
-            else:
-                with smtplib.SMTP(settings.SMTP_HOST, 587, timeout=10) as server:
-                    server.starttls()
-                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                    server.sendmail(settings.SMTP_USER, email_to, message.as_string())
-            print(f"DEBUG: Fallback email sent successfully to {email_to}")
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(url, headers=headers, json=payload)
+            
+        if response.status_code in [200, 201, 202]:
+            print(f"DEBUG: Email sent successfully via Brevo to {email_to}")
             return True
-        except Exception as fallback_e:
-            print(f"ERROR: Fallback also failed: {fallback_e}")
+        else:
+            print(f"ERROR: Brevo API error {response.status_code}: {response.text}")
             return False
+    except Exception as e:
+        print(f"ERROR: Failed to send email via Brevo to {email_to}: {e}")
+        return False
