@@ -91,9 +91,6 @@ async def update_password_me(
     user = await crud.user.update(db, db_obj=current_user, obj_in=user_in)
     return user
 
-    user = await crud.user.update(db, db_obj=current_user, obj_in=user_in)
-    return user
-
 @router.post("/me/verify-password", response_model=Any)
 async def verify_password_me(
     *,
