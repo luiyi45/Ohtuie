@@ -7,6 +7,7 @@ from uuid import UUID
 
 from app import crud, models, schemas
 from app.api import deps
+from app.core import security
 
 router = APIRouter()
 
@@ -72,6 +73,39 @@ async def update_user_me(
         user_in.email = email
     user = await crud.user.update(db, db_obj=current_user, obj_in=user_in)
     return user
+
+@router.put("/me/password", response_model=schemas.User)
+async def update_password_me(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    password_in: schemas.UserUpdatePassword,
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Update own password.
+    """
+    if not security.verify_password(password_in.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="La contraseña actual es incorrecta")
+    
+    user_in = schemas.UserUpdate(password=password_in.new_password)
+    user = await crud.user.update(db, db_obj=current_user, obj_in=user_in)
+    return user
+
+    user = await crud.user.update(db, db_obj=current_user, obj_in=user_in)
+    return user
+
+@router.post("/me/verify-password", response_model=Any)
+async def verify_password_me(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    password_in: schemas.UserUpdatePassword = Body(...), # Or a smaller schema, but this works
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Verify current password for the logged in user.
+    """
+    valid = security.verify_password(password_in.current_password, current_user.hashed_password)
+    return {"valid": valid}
 
 @router.get("/me", response_model=schemas.User)
 async def read_user_me(

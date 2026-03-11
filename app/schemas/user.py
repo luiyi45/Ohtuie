@@ -24,6 +24,10 @@ class UserCreate(UserBase):
 class UserUpdate(UserBase):
     password: Optional[str] = Field(None, min_length=6)
 
+class UserUpdatePassword(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=6)
+
 class UserInDBBase(UserBase):
     id: Optional[UUID] = None
     role: str
