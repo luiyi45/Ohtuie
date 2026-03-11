@@ -9,7 +9,7 @@ from app.api import deps
 
 router = APIRouter()
 
-@router.get("/", response_model=List[schemas.Cycle])
+@router.get("", response_model=List[schemas.Cycle])
 async def read_cycles(
     db: AsyncSession = Depends(deps.get_db),
     skip: int = 0,
@@ -25,7 +25,7 @@ async def read_cycles(
         cycles = await crud.cycle.get_multi_by_user(db=db, user_id=current_user.id, skip=skip, limit=limit)
     return cycles
 
-@router.post("/", response_model=schemas.Cycle)
+@router.post("", response_model=schemas.Cycle)
 async def create_cycle(
     *,
     db: AsyncSession = Depends(deps.get_db),

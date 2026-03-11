@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "OHTUIE"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "placeholder_secret_key_change_me"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200  # 30 days
     DATABASE_URL: str | None = None
 
     @field_validator("DATABASE_URL", mode="before")

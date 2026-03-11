@@ -10,7 +10,7 @@ from app.api import deps
 
 router = APIRouter()
 
-@router.get("/", response_model=List[schemas.User])
+@router.get("", response_model=List[schemas.User])
 async def read_users(
     db: AsyncSession = Depends(deps.get_db),
     skip: int = 0,
@@ -24,7 +24,7 @@ async def read_users(
     # Filter out current user (admin) from the list
     return [u for u in users if u.id != current_user.id]
 
-@router.post("/", response_model=schemas.User)
+@router.post("", response_model=schemas.User)
 async def create_user(
     *,
     db: AsyncSession = Depends(deps.get_db),

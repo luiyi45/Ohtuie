@@ -8,7 +8,7 @@ from app.api import deps
 
 router = APIRouter()
 
-@router.get("/", response_model=List[schemas.DailyLog])
+@router.get("", response_model=List[schemas.DailyLog])
 async def read_daily_logs(
     db: AsyncSession = Depends(deps.get_db),
     skip: int = 0,
@@ -23,7 +23,7 @@ async def read_daily_logs(
     )
     return logs
 
-@router.post("/", response_model=schemas.DailyLog)
+@router.post("", response_model=schemas.DailyLog)
 async def create_or_update_daily_log(
     *,
     db: AsyncSession = Depends(deps.get_db),
