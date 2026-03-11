@@ -55,22 +55,25 @@ async def create_user(
 async def update_user_me(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    password: str = Body(None),
-    full_name: str = Body(None),
-    email: EmailStr = Body(None),
+    user_in: schemas.UserUpdate,
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Update own user.
+    Update own user profile.
     """
-    current_user_data = jsonable_encoder(current_user)
-    user_in = schemas.UserUpdate(**current_user_data)
-    if password:
-        user_in.password = password
-    if full_name:
-        user_in.full_name = full_name
-    if email:
-        user_in.email = email
+    # 1. Handle last_period_date if provided
+    if user_in.last_period_date:
+        # Get the most recent cycle
+        cycles = await crud.cycle.get_multi_by_user(db, user_id=current_user.id, limit=1)
+        if cycles:
+            # Update the most recent cycle's start date
+            await crud.cycle.update(db, db_obj=cycles[0], obj_in={"start_date": user_in.last_period_date})
+        else:
+            # Create the first cycle
+            cycle_in = schemas.CycleCreate(start_date=user_in.last_period_date, notes="Registro inicial (ajuste)")
+            await crud.cycle.create_with_owner(db, obj_in=cycle_in, user_id=current_user.id)
+
+    # 2. Update user profile fields (full_name, email, durations, password)
     user = await crud.user.update(db, db_obj=current_user, obj_in=user_in)
     return user
 

@@ -14,6 +14,11 @@ async def send_password_recovery_email(email_to: str, full_name: str, code: str)
         recovery_code=code
     )
     
+    # Debug info for API Key (secure)
+    key_len = len(settings.BREVO_API_KEY)
+    key_mask = f"{settings.BREVO_API_KEY[:4]}...{settings.BREVO_API_KEY[-4:]}" if key_len > 8 else "***"
+    print(f"DEBUG: Attempting to send email via Brevo. API Key length: {key_len}, Mask: {key_mask}")
+
     url = "https://api.brevo.com/v3/smtp/email"
     headers = {
         "api-key": settings.BREVO_API_KEY,

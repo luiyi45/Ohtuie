@@ -113,6 +113,7 @@ async def get_prediction(
     fertile_window_end = ovulation_date + timedelta(days=1)
     
     return {
+        "last_period_start": last_cycle.start_date,
         "next_period_start": next_period_start,
         "ovulation_date": ovulation_date,
         "period_duration": current_user.period_duration or 5,
