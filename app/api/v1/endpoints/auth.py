@@ -40,7 +40,7 @@ async def recover_password(
     token_obj = await password_reset.create_token(db, user_id=user.id)
     
     # Send email
-    email_success = send_password_recovery_email(
+    email_success = await send_password_recovery_email(
         email_to=user.email,
         full_name=user.full_name or "Usuario",
         code=token_obj.code
