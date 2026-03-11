@@ -10,5 +10,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 ENV PYTHONPATH=/app
-# Cloud Run
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Start application using dynamic port for Railway
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}
