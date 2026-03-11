@@ -28,12 +28,12 @@ def send_password_recovery_email(email_to: str, full_name: str, code: str):
     try:
         # Try port 465 (SSL) first as configured
         if settings.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
                 server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                 server.sendmail(settings.SMTP_USER, email_to, message.as_string())
         else:
             # Try port 587 (STARTTLS) or others
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
                 server.starttls()
                 server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                 server.sendmail(settings.SMTP_USER, email_to, message.as_string())
@@ -48,11 +48,11 @@ def send_password_recovery_email(email_to: str, full_name: str, code: str):
             print(f"DEBUG: Attempting fallback to port {fallback_port}")
             if fallback_port == 465:
                 # This check is just for safety, usually fallback is to 587
-                with smtplib.SMTP_SSL(settings.SMTP_HOST, 465, timeout=15) as server:
+                with smtplib.SMTP_SSL(settings.SMTP_HOST, 465, timeout=10) as server:
                     server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                     server.sendmail(settings.SMTP_USER, email_to, message.as_string())
             else:
-                with smtplib.SMTP(settings.SMTP_HOST, 587, timeout=15) as server:
+                with smtplib.SMTP(settings.SMTP_HOST, 587, timeout=10) as server:
                     server.starttls()
                     server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                     server.sendmail(settings.SMTP_USER, email_to, message.as_string())

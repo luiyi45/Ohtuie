@@ -28,9 +28,9 @@ async def recover_password(
     
     # Rate limit check: max 5 recoveries per 24 hours
     one_day_ago = datetime.now(timezone.utc) - timedelta(days=1)
-    # Check tokens created for this user in the last 24h
+    # Rate limit check: max 20 recoveries per 24 hours (Increased for testing)
     token_count = await password_reset.get_count_by_user_after(db, user_id=user.id, after=one_day_ago)
-    if token_count >= 5:
+    if token_count >= 20:
         raise HTTPException(
             status_code=429,
             detail="Too many password recovery requests. Please try again tomorrow.",
@@ -47,6 +47,7 @@ async def recover_password(
     )
     
     if not email_success:
+        await password_reset.remove_token(db, token_id=token_obj.id)
         raise HTTPException(
             status_code=500,
             detail="Error al enviar el correo de recuperación. Por favor, contacta al soporte o intenta más tarde."

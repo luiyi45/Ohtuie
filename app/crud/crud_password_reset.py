@@ -65,5 +65,11 @@ class CRUDPasswordReset:
             return user_result.scalars().first()
         return None
 
+    async def remove_token(self, db: AsyncSession, *, token_id: str) -> None:
+        from sqlalchemy import delete
+        query = delete(PasswordResetToken).where(PasswordResetToken.id == token_id)
+        await db.execute(query)
+        await db.commit()
+
 
 password_reset = CRUDPasswordReset()
