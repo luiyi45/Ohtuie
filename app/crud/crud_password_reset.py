@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import random
 import string
 from typing import Optional
@@ -20,7 +20,7 @@ class CRUDPasswordReset:
     async def cleanup_tokens(self, db: AsyncSession) -> None:
         from sqlalchemy import delete
         # Delete tokens older than 24 hours
-        one_day_ago = datetime.utcnow() - timedelta(days=1)
+        one_day_ago = datetime.now(timezone.utc) - timedelta(days=1)
         query = delete(PasswordResetToken).where(
             PasswordResetToken.created_at < one_day_ago
         )
@@ -32,7 +32,7 @@ class CRUDPasswordReset:
         await self.cleanup_tokens(db)
         
         code = "".join(random.choices(string.digits, k=6))
-        expires_at = datetime.utcnow() + timedelta(minutes=15)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
         
         db_obj = PasswordResetToken(
             user_id=user_id,
@@ -50,7 +50,7 @@ class CRUDPasswordReset:
             User.email == email,
             PasswordResetToken.code == code,
             PasswordResetToken.is_used == False,
-            PasswordResetToken.expires_at > datetime.utcnow()
+            PasswordResetToken.expires_at > datetime.now(timezone.utc)
         )
         result = await db.execute(query)
         token = result.scalars().first()

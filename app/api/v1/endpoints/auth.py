@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +27,7 @@ async def recover_password(
         )
     
     # Rate limit check: max 5 recoveries per 24 hours
-    one_day_ago = datetime.utcnow() - timedelta(days=1)
+    one_day_ago = datetime.now(timezone.utc) - timedelta(days=1)
     # Check tokens created for this user in the last 24h
     token_count = await password_reset.get_count_by_user_after(db, user_id=user.id, after=one_day_ago)
     if token_count >= 5:
