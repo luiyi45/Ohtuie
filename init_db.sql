@@ -15,7 +15,8 @@ CREATE TABLE public.users (
     failed_login_attempts INTEGER DEFAULT 0 NOT NULL,
     locked_until TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Cycles Table

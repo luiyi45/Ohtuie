@@ -11,6 +11,7 @@ class UserBase(BaseModel):
     birthday: Optional[date] = None
     cycle_duration: Optional[int] = None
     period_duration: Optional[int] = None
+    deleted_at: Optional[datetime] = None
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):

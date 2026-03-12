@@ -11,19 +11,24 @@ from app.core import security
 
 router = APIRouter()
 
-@router.get("", response_model=List[schemas.User])
+@router.get("", response_model=Any)
 async def read_users(
     db: AsyncSession = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
+    status: str = "all",
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
     Retrieve users.
     """
-    users = await crud.user.get_multi(db, skip=skip, limit=limit)
-    # Filter out current user (admin) from the list
-    return [u for u in users if u.id != current_user.id]
+    users, total = await crud.user.get_users_paginated(
+        db=db, skip=skip, limit=limit, status=status, current_user_id=current_user.id
+    )
+    return {
+        "items": [jsonable_encoder(schemas.User.model_validate(u)) for u in users],
+        "total": total
+    }
 
 @router.post("", response_model=schemas.User)
 async def create_user(

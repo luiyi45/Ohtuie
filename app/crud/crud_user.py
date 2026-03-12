@@ -42,6 +42,46 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             update_data["hashed_password"] = hashed_password
         return await super().update(db, db_obj=db_obj, obj_in=update_data)
 
+    async def remove(self, db: AsyncSession, *, id: Any) -> User:
+        user = await self.get(db, id=id)
+        if user:
+            user.deleted_at = datetime.now(timezone.utc)
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+        return user
+
+    async def get_users_paginated(
+        self, db: AsyncSession, skip: int = 0, limit: int = 100, status: str = "all", current_user_id: Any = None
+    ) -> tuple[List[User], int]:
+        from sqlalchemy import func
+        
+        query = select(User)
+        
+        if current_user_id:
+            query = query.filter(User.id != current_user_id)
+            
+        if status == "active":
+            query = query.filter(User.is_active == True, User.deleted_at == None)
+        elif status == "blocked":
+            query = query.filter(User.is_active == False, User.deleted_at == None)
+        elif status == "deleted":
+            query = query.filter(User.deleted_at != None)
+        elif status == "all":
+            query = query.filter(User.deleted_at == None)
+            
+        # Get total count
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await db.execute(count_query)
+        total = total_result.scalar_one()
+        
+        # Get items
+        query = query.order_by(User.created_at.desc()).offset(skip).limit(limit)
+        result = await db.execute(query)
+        items = result.scalars().all()
+        
+        return items, total
+
     async def authenticate(self, db: AsyncSession, *, email: str, password: str) -> Optional[User]:
         user = await self.get_by_email(db, email=email)
         if not user:
