@@ -17,13 +17,14 @@ async def read_users(
     skip: int = 0,
     limit: int = 100,
     status: str = "all",
+    search: Optional[str] = None,
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
     Retrieve users.
     """
     users, total = await crud.user.get_users_paginated(
-        db=db, skip=skip, limit=limit, status=status, current_user_id=current_user.id
+        db=db, skip=skip, limit=limit, status=status, current_user_id=current_user.id, search=search
     )
     return {
         "items": [jsonable_encoder(schemas.User.model_validate(u)) for u in users],

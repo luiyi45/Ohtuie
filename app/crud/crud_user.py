@@ -52,9 +52,9 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return user
 
     async def get_users_paginated(
-        self, db: AsyncSession, skip: int = 0, limit: int = 100, status: str = "all", current_user_id: Any = None
+        self, db: AsyncSession, skip: int = 0, limit: int = 100, status: str = "all", current_user_id: Any = None, search: str = None
     ) -> tuple[List[User], int]:
-        from sqlalchemy import func
+        from sqlalchemy import func, or_
         
         query = select(User)
         
@@ -69,6 +69,16 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             query = query.filter(User.deleted_at != None)
         elif status == "all":
             query = query.filter(User.deleted_at == None)
+            
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                or_(
+                    User.full_name.ilike(search_term),
+                    User.email.ilike(search_term)
+                )
+            )
+            
             
         # Get total count
         count_query = select(func.count()).select_from(query.subquery())
