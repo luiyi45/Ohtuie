@@ -12,6 +12,6 @@ class AdminStatistics(BaseModel):
     failed_logins_last_7_days: Dict[str, int] = {} # e.g., {"2026-02-12": 5, ...}
     registrations_today: int
     suspicious_registrations_count: int
-    flow_analysis: Dict[str, int] # e.g., {"light": 10, "medium": 15, "heavy": 5}
-    user_registrations_last_7_days: Dict[str, int] # e.g., {"2026-02-12": 5, ...}
-    age_distribution: Dict[str, int] # e.g., {"<18": 10, "18-25": 20, ...}
+    flow_analysis: Dict[str, int] = {}
+    user_registrations_last_7_days: Dict[str, int] = {}
+    age_distribution: Dict[str, int] = {}
