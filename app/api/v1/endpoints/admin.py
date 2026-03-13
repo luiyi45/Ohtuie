@@ -45,6 +45,17 @@ async def get_statistics(
     )
     failed_logins_24h = failed_logins_query.scalar_one()
     
+    # 3.5 Failed logins (last 7 days)
+    seven_days_ago = datetime.utcnow().date() - timedelta(days=7)
+    failed_logins_7d_query = await db.execute(
+        select(func.date(models.AuditLog.created_at), func.count(models.AuditLog.id))
+        .where(models.AuditLog.event_type == "failed_login")
+        .where(func.date(models.AuditLog.created_at) >= seven_days_ago)
+        .group_by(func.date(models.AuditLog.created_at))
+        .order_by(func.date(models.AuditLog.created_at))
+    )
+    failed_logins_last_7_days = {str(row[0]): row[1] for row in failed_logins_7d_query.all()}
+    
     # 4. Flow analysis (assuming it's in DailyLog)
     flow_query = await db.execute(
         select(models.DailyLog.flow, func.count(models.DailyLog.id))
@@ -93,6 +104,7 @@ async def get_statistics(
         "avg_cycle_duration": avg_cycle_duration,
         "avg_period_duration": avg_period_duration,
         "failed_logins_24h": failed_logins_24h,
+        "failed_logins_last_7_days": failed_logins_last_7_days,
         "flow_analysis": flow_analysis,
         "user_registrations_last_7_days": user_registrations_last_7_days,
         "age_distribution": age_distribution,
