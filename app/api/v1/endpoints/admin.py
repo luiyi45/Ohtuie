@@ -120,6 +120,33 @@ async def get_statistics(
     for r in ["<18", "18-25", "26-35", "36-45", "46+"]:
         if r not in age_distribution:
             age_distribution[r] = 0
+            
+    # 7. Retention Stats (Active vs Blocked vs Deleted)
+    # Re-using total_users from earlier
+    blocked_users_query = await db.execute(select(func.count(models.User.id)).where(models.User.is_active == False, models.User.deleted_at == None))
+    blocked_users = blocked_users_query.scalar_one()
+    deleted_users_query = await db.execute(select(func.count(models.User.id)).where(models.User.deleted_at != None))
+    deleted_users = deleted_users_query.scalar_one()
+    
+    retention_stats = {
+        "Activas": active_users, # calculated earlier
+        "Bloqueadas": blocked_users,
+        "Eliminadas": deleted_users,
+    }
+
+    # 8. Calendar Usage Last 7 Days
+    # We will count cycles created/started in the last 7 days as a proxy for calendar usage.
+    calendar_start_dt = datetime.utcnow().date() - timedelta(days=6)
+    calendar_end_dt = datetime.utcnow().date()
+    
+    calendar_usage_query = await db.execute(
+        select(func.date(models.Cycle.created_at), func.count(models.Cycle.id))
+        .where(func.date(models.Cycle.created_at) >= calendar_start_dt)
+        .where(func.date(models.Cycle.created_at) <= calendar_end_dt)
+        .group_by(func.date(models.Cycle.created_at))
+        .order_by(func.date(models.Cycle.created_at))
+    )
+    calendar_usage_last_7_days = {str(row[0]): row[1] for row in calendar_usage_query.all()}
 
     return {
         "total_users": total_users,
@@ -135,6 +162,8 @@ async def get_statistics(
         "flow_analysis": {},  # Placeholder to satisfy schema validation
         "user_registrations_last_7_days": user_registrations_last_7_days,
         "age_distribution": age_distribution,
+        "retention_stats": retention_stats,
+        "calendar_usage_last_7_days": calendar_usage_last_7_days,
     }
 
 @router.post("/verify-password", response_model=schemas.Msg)

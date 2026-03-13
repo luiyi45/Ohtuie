@@ -31,6 +31,17 @@ async def read_users(
         "total": total
     }
 
+@router.get("/counts", response_model=Any)
+async def read_user_counts(
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Retrieve total counts of users per status (all, active, blocked, deleted).
+    """
+    counts = await crud.user.get_status_counts(db, current_user_id=current_user.id)
+    return counts
+
 @router.post("", response_model=schemas.User)
 async def create_user(
     *,

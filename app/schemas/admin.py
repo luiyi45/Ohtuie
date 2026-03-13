@@ -12,6 +12,8 @@ class AdminStatistics(BaseModel):
     failed_logins_last_7_days: Dict[str, int] = {} # e.g., {"2026-02-12": 5, ...}
     registrations_today: int
     suspicious_registrations_count: int
-    flow_analysis: Dict[str, int] = {}
+    flow_analysis: Dict[str, int] = {} # Keeping this for backwards compatibility for now, but will be empty
     user_registrations_last_7_days: Dict[str, int] = {}
     age_distribution: Dict[str, int] = {}
+    retention_stats: Dict[str, int] = {}
+    calendar_usage_last_7_days: Dict[str, int] = {}

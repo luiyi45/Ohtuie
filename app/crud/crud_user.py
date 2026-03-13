@@ -92,6 +92,33 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         
         return items, total
 
+    async def get_status_counts(self, db: AsyncSession, current_user_id: Any = None) -> Dict[str, int]:
+        from sqlalchemy import func
+        
+        # Base queries ignoring the current user
+        base_query = select(User)
+        if current_user_id:
+            base_query = base_query.filter(User.id != current_user_id)
+            
+        active_q = select(func.count()).select_from(base_query.filter(User.is_active == True, User.deleted_at == None).subquery())
+        blocked_q = select(func.count()).select_from(base_query.filter(User.is_active == False, User.deleted_at == None).subquery())
+        deleted_q = select(func.count()).select_from(base_query.filter(User.deleted_at != None).subquery())
+        all_q = select(func.count()).select_from(base_query.filter(User.deleted_at == None).subquery())
+        
+        # Ideally, we can execute these in parallel or conditionally via case statements.
+        # But this is readable and fine for now.
+        active_res = await db.execute(active_q)
+        blocked_res = await db.execute(blocked_q)
+        deleted_res = await db.execute(deleted_q)
+        all_res = await db.execute(all_q)
+        
+        return {
+            "active": active_res.scalar_one(),
+            "blocked": blocked_res.scalar_one(),
+            "deleted": deleted_res.scalar_one(),
+            "all": all_res.scalar_one()
+        }
+
     async def authenticate(self, db: AsyncSession, *, email: str, password: str) -> Optional[User]:
         user = await self.get_by_email(db, email=email)
         if not user:
