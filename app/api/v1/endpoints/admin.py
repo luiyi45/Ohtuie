@@ -132,7 +132,6 @@ async def get_statistics(
         "failed_logins_last_7_days": failed_logins_last_7_days,
         "registrations_today": registrations_today,
         "suspicious_registrations_count": suspicious_registrations_count,
-        "flow_analysis": flow_analysis,
         "user_registrations_last_7_days": user_registrations_last_7_days,
         "age_distribution": age_distribution,
     }
