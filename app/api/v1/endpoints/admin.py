@@ -13,8 +13,10 @@ router = APIRouter()
 async def get_statistics(
     db: AsyncSession = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_active_superuser),
-    start_date: str | None = None, # YYYY-MM-DD
-    end_date: str | None = None    # YYYY-MM-DD
+    f_start: str | None = None, # Failed logins start date
+    f_end: str | None = None,   # Failed logins end date
+    r_start: str | None = None, # Registrations start date
+    r_end: str | None = None    # Registrations end date
 ) -> Any:
     """
     Get system-wide statistics for admin dashboard.
@@ -50,44 +52,50 @@ async def get_statistics(
         .where(models.AuditLog.created_at >= today_start)
     )
     failed_logins_today = failed_logins_today_query.scalar_one()
+
+    # 3.2 Registrations (Today)
+    registrations_today_query = await db.execute(
+        select(func.count(models.User.id))
+        .where(models.User.created_at >= today_start)
+    )
+    registrations_today = registrations_today_query.scalar_one()
+
+    # 3.3 Suspicious registrations (Placeholder heuristic: users without full_name or inactive on creation)
+    # Using users without full_name as a "suspicious" indicator for now.
+    suspicious_query = await db.execute(
+        select(func.count(models.User.id))
+        .where(models.User.full_name == None)
+        .where(models.User.created_at >= today_start)
+    )
+    suspicious_registrations_count = suspicious_query.scalar_one()
     
-    # 3.2 Failed logins (Dynamic range)
-    if end_date:
-        end_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
-    else:
-        end_dt = datetime.utcnow().date()
-        
-    if start_date:
-        start_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
-    else:
-        start_dt = end_dt - timedelta(days=6)
-        
+    # 3.4 Decoupled ranges
+    # Failed Logins Range
+    f_end_dt = datetime.strptime(f_end, "%Y-%m-%d").date() if f_end else datetime.utcnow().date()
+    f_start_dt = datetime.strptime(f_start, "%Y-%m-%d").date() if f_start else f_end_dt - timedelta(days=6)
+    
     failed_logins_range_query = await db.execute(
         select(func.date(models.AuditLog.created_at), func.count(models.AuditLog.id))
         .where(models.AuditLog.event_type == "failed_login")
-        .where(func.date(models.AuditLog.created_at) >= start_dt)
-        .where(func.date(models.AuditLog.created_at) <= end_dt)
+        .where(func.date(models.AuditLog.created_at) >= f_start_dt)
+        .where(func.date(models.AuditLog.created_at) <= f_end_dt)
         .group_by(func.date(models.AuditLog.created_at))
         .order_by(func.date(models.AuditLog.created_at))
     )
     failed_logins_last_7_days = {str(row[0]): row[1] for row in failed_logins_range_query.all()}
-    
-    # 4. Flow analysis (assuming it's in DailyLog)
-    flow_query = await db.execute(
-        select(models.DailyLog.flow, func.count(models.DailyLog.id))
-        .group_by(models.DailyLog.flow)
-    )
-    flow_analysis = {row[0]: row[1] for row in flow_query.all() if row[0] is not None}
-    
-    # 5. User registrations (last 7 days)
-    seven_days_ago = datetime.utcnow().date() - timedelta(days=7)
-    registrations_query = await db.execute(
+
+    # Registrations Range
+    r_end_dt = datetime.strptime(r_end, "%Y-%m-%d").date() if r_end else datetime.utcnow().date()
+    r_start_dt = datetime.strptime(r_start, "%Y-%m-%d").date() if r_start else r_end_dt - timedelta(days=6)
+
+    registrations_range_query = await db.execute(
         select(func.date(models.User.created_at), func.count(models.User.id))
-        .where(func.date(models.User.created_at) >= seven_days_ago)
+        .where(func.date(models.User.created_at) >= r_start_dt)
+        .where(func.date(models.User.created_at) <= r_end_dt)
         .group_by(func.date(models.User.created_at))
         .order_by(func.date(models.User.created_at))
     )
-    user_registrations_last_7_days = {str(row[0]): row[1] for row in registrations_query.all()}
+    user_registrations_last_7_days = {str(row[0]): row[1] for row in registrations_range_query.all()}
     
     # 6. Age distribution
     age_query = await db.execute(
@@ -122,6 +130,8 @@ async def get_statistics(
         "failed_logins_24h": failed_logins_24h,
         "failed_logins_today": failed_logins_today,
         "failed_logins_last_7_days": failed_logins_last_7_days,
+        "registrations_today": registrations_today,
+        "suspicious_registrations_count": suspicious_registrations_count,
         "flow_analysis": flow_analysis,
         "user_registrations_last_7_days": user_registrations_last_7_days,
         "age_distribution": age_distribution,
