@@ -13,6 +13,8 @@ router = APIRouter()
 async def get_statistics(
     db: AsyncSession = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_active_superuser),
+    start_date: str | None = None, # YYYY-MM-DD
+    end_date: str | None = None    # YYYY-MM-DD
 ) -> Any:
     """
     Get system-wide statistics for admin dashboard.
@@ -28,15 +30,10 @@ async def get_statistics(
     total_cycles_query = await db.execute(select(func.count(models.Cycle.id)))
     total_cycles = total_cycles_query.scalar_one()
     
-    # Simplified avg for now (assuming duration is stored or calculated)
-    # Actually, we don't have duration in the model, it might be calculated between cycles.
-    # In CycleSetupScreen, we had a duration field in UserRegistration. 
-    # Let's check the Cycle model again.
-    
     avg_cycle_duration = 28.0 # Placeholder
     avg_period_duration = 5.0 # Placeholder
     
-    # 3. Failed logins (last 24h)
+    # 3. Failed logins (last 24h - Sliding window)
     yesterday = datetime.utcnow() - timedelta(days=1)
     failed_logins_query = await db.execute(
         select(func.count(models.AuditLog.id))
@@ -44,17 +41,36 @@ async def get_statistics(
         .where(models.AuditLog.created_at >= yesterday)
     )
     failed_logins_24h = failed_logins_query.scalar_one()
+
+    # 3.1 Failed logins (Today - Calendar day)
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    failed_logins_today_query = await db.execute(
+        select(func.count(models.AuditLog.id))
+        .where(models.AuditLog.event_type == "failed_login")
+        .where(models.AuditLog.created_at >= today_start)
+    )
+    failed_logins_today = failed_logins_today_query.scalar_one()
     
-    # 3.5 Failed logins (last 7 days)
-    seven_days_ago = datetime.utcnow().date() - timedelta(days=7)
-    failed_logins_7d_query = await db.execute(
+    # 3.2 Failed logins (Dynamic range)
+    if end_date:
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
+    else:
+        end_dt = datetime.utcnow().date()
+        
+    if start_date:
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
+    else:
+        start_dt = end_dt - timedelta(days=6)
+        
+    failed_logins_range_query = await db.execute(
         select(func.date(models.AuditLog.created_at), func.count(models.AuditLog.id))
         .where(models.AuditLog.event_type == "failed_login")
-        .where(func.date(models.AuditLog.created_at) >= seven_days_ago)
+        .where(func.date(models.AuditLog.created_at) >= start_dt)
+        .where(func.date(models.AuditLog.created_at) <= end_dt)
         .group_by(func.date(models.AuditLog.created_at))
         .order_by(func.date(models.AuditLog.created_at))
     )
-    failed_logins_last_7_days = {str(row[0]): row[1] for row in failed_logins_7d_query.all()}
+    failed_logins_last_7_days = {str(row[0]): row[1] for row in failed_logins_range_query.all()}
     
     # 4. Flow analysis (assuming it's in DailyLog)
     flow_query = await db.execute(
@@ -104,6 +120,7 @@ async def get_statistics(
         "avg_cycle_duration": avg_cycle_duration,
         "avg_period_duration": avg_period_duration,
         "failed_logins_24h": failed_logins_24h,
+        "failed_logins_today": failed_logins_today,
         "failed_logins_last_7_days": failed_logins_last_7_days,
         "flow_analysis": flow_analysis,
         "user_registrations_last_7_days": user_registrations_last_7_days,
