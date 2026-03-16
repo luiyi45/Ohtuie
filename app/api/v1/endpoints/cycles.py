@@ -77,6 +77,18 @@ async def delete_cycle(
     cycle = await crud.cycle.remove(db=db, id=id)
     return cycle
 
+@router.delete("/clear-history", response_model=Any)
+async def clear_cycle_history(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Clear all cycle history for the current user.
+    """
+    count = await crud.cycle.remove_all_by_user(db=db, user_id=current_user.id)
+    return {"message": f"Successfully deleted {count} cycle records"}
+
 @router.get("/prediction", response_model=Any)
 async def get_prediction(
     db: AsyncSession = Depends(deps.get_db),
