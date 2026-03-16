@@ -7,6 +7,8 @@ from sqlalchemy.future import select
 from app.crud.base import CRUDBase
 from app.models.cycle import Cycle
 from app.schemas.cycle import CycleCreate, CycleUpdate
+from sqlalchemy import extract
+
 
 class CRUDCycle(CRUDBase[Cycle, CycleCreate, CycleUpdate]):
     async def get_multi_by_user(
@@ -24,6 +26,22 @@ class CRUDCycle(CRUDBase[Cycle, CycleCreate, CycleUpdate]):
     async def create_with_owner(
         self, db: AsyncSession, *, obj_in: CycleCreate, user_id: UUID
     ) -> Cycle:
+        # Check if a cycle already exists for this user in the same month and year as the new start_date
+        result = await db.execute(
+            select(Cycle)
+            .filter(
+                Cycle.user_id == user_id,
+                extract('month', Cycle.start_date) == obj_in.start_date.month,
+                extract('year', Cycle.start_date) == obj_in.start_date.year
+            )
+        )
+        existing_cycle = result.scalars().first()
+
+        if existing_cycle:
+            # If it exists, update it with the new data
+            return await self.update(db, db_obj=existing_cycle, obj_in=obj_in)
+
+        # Otherwise, create a new one
         db_obj = Cycle(
             **obj_in.model_dump(),
             user_id=user_id
