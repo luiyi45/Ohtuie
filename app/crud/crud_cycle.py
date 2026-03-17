@@ -51,6 +51,19 @@ class CRUDCycle(CRUDBase[Cycle, CycleCreate, CycleUpdate]):
         await db.refresh(db_obj)
         return db_obj
 
+    async def remove_batch(
+        self, db: AsyncSession, *, ids: List[UUID]
+    ) -> int:
+        result = await db.execute(
+            select(Cycle).filter(Cycle.id.in_(ids))
+        )
+        objs = result.scalars().all()
+        count = len(objs)
+        for obj in objs:
+            await db.delete(obj)
+        await db.commit()
+        return count
+
     async def remove_all_by_user(
         self, db: AsyncSession, *, user_id: UUID
     ) -> int:

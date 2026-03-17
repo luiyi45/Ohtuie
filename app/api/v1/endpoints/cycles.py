@@ -59,6 +59,42 @@ async def update_cycle(
     cycle = await crud.cycle.update(db=db, db_obj=cycle, obj_in=cycle_in)
     return cycle
 
+@router.post("/delete-batch", response_model=Any)
+async def delete_cycles_batch(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    request_data: schemas.DeleteBatchRequest,
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Delete multiple cycles.
+    """
+    ids = request_data.ids
+    # Verify ownership for all IDs
+    result = await db.execute(
+        select(models.Cycle).filter(models.Cycle.id.in_(ids), models.Cycle.user_id == current_user.id)
+    )
+    valid_cycles = result.scalars().all()
+    valid_ids = [c.id for c in valid_cycles]
+    
+    if not valid_ids:
+        return {"message": "No valid cycles found to delete"}
+        
+    count = await crud.cycle.remove_batch(db=db, ids=valid_ids)
+    return {"message": f"Successfully deleted {count} cycle records"}
+
+@router.delete("/clear-history", response_model=Any)
+async def clear_cycle_history(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Clear all cycle history for the current user.
+    """
+    count = await crud.cycle.remove_all_by_user(db=db, user_id=current_user.id)
+    return {"message": f"Successfully deleted {count} cycle records"}
+
 @router.delete("/{id}", response_model=schemas.Cycle)
 async def delete_cycle(
     *,
@@ -76,18 +112,6 @@ async def delete_cycle(
         raise HTTPException(status_code=400, detail="Not enough permissions")
     cycle = await crud.cycle.remove(db=db, id=id)
     return cycle
-
-@router.delete("/clear-history", response_model=Any)
-async def clear_cycle_history(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user),
-) -> Any:
-    """
-    Clear all cycle history for the current user.
-    """
-    count = await crud.cycle.remove_all_by_user(db=db, user_id=current_user.id)
-    return {"message": f"Successfully deleted {count} cycle records"}
 
 @router.get("/prediction", response_model=Any)
 async def get_prediction(
