@@ -34,6 +34,27 @@
     "tip": "El magnesio y dormir 8 horas completas harán maravillas por tu energía mañana.",
     "icon": "battery_low"
   },
+  "tired": {
+    "label": "Cansada",
+    "msg": "Es normal sentir que tu energía baja un poco hoy, hermosa. Escucha a tu cuerpo y descansa.",
+    "advice": "Regálate un momento de relax hoy, te lo has ganado.",
+    "tip": "Un baño tibio antes de dormir te ayudará a recuperar energías.",
+    "icon": "battery_low"
+  },
+  "irritable": {
+    "label": "Irritable",
+    "msg": "Cielo, esos cambios de humor son parte de tus ciclos. Respira profundo, todo está bien.",
+    "advice": "Date un espacio a solas si lo necesitas, cuida tu paz mental.",
+    "tip": "Practica la respiración 4-7-8 para calmar tu sistema nervioso.",
+    "icon": "sentiment_dissatisfied"
+  },
+  "stressed": {
+    "label": "Estresada",
+    "msg": "Bonita, no dejes que el mundo te abrume. Eres capaz de manejar esto paso a paso.",
+    "advice": "Prioriza hoy solo lo esencial y deja el resto para mañana.",
+    "tip": "Desconecta del celular por una hora para bajar los niveles de cortisol.",
+    "icon": "psychology"
+  },
   "happy": {
     "label": "Feliz",
     "msg": "¡Qué alegría ver esa sonrisa, preciosa! Tu felicidad ilumina todo a tu alrededor.",
