@@ -1,0 +1,65 @@
+{
+  "aching_head": {
+    "label": "Dolor de cabeza",
+    "msg": "Mi niña, lamento que hoy tu cabecita te moleste. Eres fuerte y esto también pasará.",
+    "advice": "Trata de descansar en un lugar oscuro y fresco. Te quiero mucho.",
+    "tip": "Evita las pantallas y bebe mucha agua; la hidratación es clave para aliviar la presión.",
+    "icon": "headset_off"
+  },
+  "add_weight": {
+    "label": "Aumento de peso",
+    "msg": "Hermosa, tu cuerpo es perfecto tal como es. Estas variaciones son normales y no definen tu luz.",
+    "advice": "No seas dura contigo misma, abrázate hoy con mucha compasión.",
+    "tip": "La retención de líquidos es común; prueba infusiones de jengibre para sentirte más ligera.",
+    "icon": "monitor_weight"
+  },
+  "cramps": {
+    "label": "Cólicos",
+    "msg": "Sé que esos cólicos son difíciles, bonita. Estoy aquí mandándote todo mi amor para que te sientas mejor.",
+    "advice": "Una compresa tibia en tu vientre te dará ese apapacho que necesitas ahora.",
+    "tip": "Estiramientos suaves de yoga pueden ayudar a relajar los músculos del útero.",
+    "icon": "water_drop"
+  },
+  "bloating": {
+    "label": "Hinchazón",
+    "msg": "Sentirse hinchada es incómodo, pero recuerda que es solo tu cuerpo procesando sus ciclos naturales.",
+    "advice": "Usa ropa cómoda que te haga sentir libre y sin presiones.",
+    "tip": "Evita la sal estos días; opta por alimentos ricos en potasio como el plátano.",
+    "icon": "bubble_chart"
+  },
+  "fatigue": {
+    "label": "Fatiga",
+    "msg": "Si hoy te sientes sin fuerzas, está bien descansar. No tienes que poder con todo siempre, valiente.",
+    "advice": "Permítete una siesta corta, tu cuerpo te lo está pidiendo con amor.",
+    "tip": "El magnesio y dormir 8 horas completas harán maravillas por tu energía mañana.",
+    "icon": "battery_low"
+  },
+  "happy": {
+    "label": "Feliz",
+    "msg": "¡Qué alegría ver esa sonrisa, preciosa! Tu felicidad ilumina todo a tu alrededor.",
+    "advice": "Disfruta este momento al máximo y contagia tu buena energía.",
+    "tip": "Aprovecha este pico de energía para hacer esa actividad que tanto te apasiona.",
+    "icon": "sentiment_very_satisfied"
+  },
+  "sad": {
+    "label": "Triste",
+    "msg": "Está bien no estar bien, cielo. Permítete sentir y llorar si lo necesitas, yo te abrazo a la distancia.",
+    "advice": "Escribe tus sentimientos o escucha música que te reconforte. Soy tu fan.",
+    "tip": "La luz del sol y una caminata corta pueden ayudar a elevar tu ánimo suavemente.",
+    "icon": "sentiment_very_dissatisfied"
+  },
+  "calm": {
+    "label": "Calma",
+    "msg": "Esa paz que sientes es tu mayor tesoro, hermosa. Saborea este equilibrio de tu corazón.",
+    "advice": "Es un buen momento para meditar o simplemente disfrutar del silencio.",
+    "tip": "Practica la respiración consciente para mantener este estado de serenidad.",
+    "icon": "self_improvement"
+  },
+  "normal": {
+    "label": "Normal",
+    "msg": "Cada emoción es un mensaje de tu corazón, bonita. Escúchala con amor y paciencia.",
+    "advice": "Sigue cuidándote así de bien, te lo mereces todo.",
+    "tip": "Mantén tu rutina de autocuidado, ¡lo estás haciendo genial!",
+    "icon": "check_circle"
+  }
+}

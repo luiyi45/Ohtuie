@@ -43,4 +43,20 @@ class CRUDDailyLog(CRUDBase[DailyLog, DailyLogCreate, DailyLogUpdate]):
         )
         return result.scalars().all()
 
+    async def get_multi_by_user_and_date_range(
+        self, db: AsyncSession, *, user_id: UUID, start_date: date, end_date: date
+    ) -> List[DailyLog]:
+        result = await db.execute(
+            select(self.model)
+            .filter(
+                and_(
+                    self.model.user_id == user_id,
+                    self.model.date >= start_date,
+                    self.model.date <= end_date,
+                )
+            )
+            .order_by(self.model.date.asc())
+        )
+        return result.scalars().all()
+
 daily_log = CRUDDailyLog(DailyLog)
