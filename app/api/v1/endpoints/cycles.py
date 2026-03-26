@@ -225,34 +225,39 @@ async def get_cycle_analysis(
     pair_counts = Counter()
 
     symptom_map = {
+        "aching_head": "Dolor de cabeza",
+        "headache": "Dolor de cabeza",
+        "add_weight": "Aumento de peso",
         "cramps": "Cólicos",
         "bloating": "Hinchazón",
-        "headache": "Dolor de cabeza",
+        "fatigue": "Fatiga",
         "acne": "Acné",
         "tender_breasts": "Sensibilidad mamaria",
-        "fatigue": "Fatiga",
         "backache": "Dolor de espalda",
         "nausea": "Náuseas",
         "insomnia": "Insomnio"
     }
     
     mood_map = {
+        "normal": "Normal",
+        "angry": "Enojada",
         "happy": "Feliz",
         "sad": "Triste",
+        "calm": "Tranquila",
+        "tired": "Cansada",
         "irritable": "Irritable",
         "anxious": "Ansiosa",
-        "calm": "Tranquila",
         "energetic": "Enérgica",
         "sensitive": "Sensible",
         "low_energy": "Cansada"
     }
 
     icon_map = {
+        "Dolor de cabeza": "lib/assets/image/dolor_de_cabeza.png",
+        "Aumento de peso": "lib/assets/image/peso.png",
         "Cólicos": "lib/assets/image/colicos.png",
         "Hinchazón": "lib/assets/image/hinchazon.png",
         "Fatiga": "lib/assets/image/fatiga.png",
-        "Dolor de cabeza": "lib/assets/image/fatiga.png", # Fallback icons
-        "Sensibilidad mamaria": "lib/assets/image/colicos.png",
     }
 
     for log in logs:
