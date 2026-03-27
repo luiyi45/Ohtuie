@@ -134,6 +134,18 @@ async def read_user_me(
     """
     return current_user
 
+@router.delete("/me", response_model=schemas.User)
+async def delete_user_me(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Delete own user profile.
+    """
+    user = await crud.user.remove(db, id=current_user.id)
+    return user
+
 @router.post("/open", response_model=schemas.User)
 async def create_user_open(
     *,
