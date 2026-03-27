@@ -35,27 +35,54 @@ async def get_mood_stats(
     """
     Get mood frequency statistics for a date range.
     """
+    from datetime import timedelta
+
     logs = await crud.daily_log.get_multi_by_user_and_date_range(
         db=db, user_id=current_user.id, start_date=start_date, end_date=end_date
     )
     
+    # Map existing logs by date for easy access
+    logs_by_date = {log.date: log for log in logs}
+    
     all_moods = []
     daily_stats = []
     
-    for log in logs:
-        if log.moods:
-            all_moods.extend(log.moods)
+    # Step 1: Sum total moods in the range
+    total_moods_in_range = 0
+    current_date = start_date
+    
+    # We'll store counts to compute intensity in a second pass
+    counts = {}
+    while current_date <= end_date:
+        log = logs_by_date.get(current_date)
+        mood_list = log.moods if log and log.moods else []
+        counts[current_date] = len(mood_list)
+        total_moods_in_range += len(mood_list)
         
-        # Determine intensity (0 to 1) based on number of moods or specialized logic
-        # For now, let's say intensity is based on presence of moods
-        intensity = 0.5 if log.moods else 0.0
-        if len(log.moods) > 2: intensity = 0.8
+        if mood_list:
+            all_moods.extend(mood_list)
         
+        current_date += timedelta(days=1)
+
+    # Step 2: Build the daily stats with relative intensity
+    current_date = start_date
+    while current_date <= end_date:
+        log = logs_by_date.get(current_date)
+        day_count = counts.get(current_date, 0)
+        
+        # Calculate intensity relative to total activity in this period
+        # If total activity is 0, intensity is 0. 
+        # If only 1 mood was logged all week, that day gets 1.0 (100%).
+        intensity = 0.0
+        if total_moods_in_range > 0:
+            intensity = day_count / total_moods_in_range
+            
         daily_stats.append({
-            "date": log.date,
-            "moods": log.moods,
+            "date": current_date,
+            "moods": log.moods if log else [],
             "intensity": intensity
         })
+        current_date += timedelta(days=1)
 
     # Find predominant mood
     predominant = "normal"
