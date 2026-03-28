@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,7 +36,7 @@ async def get_statistics(
     avg_period_duration = 5.0 # Placeholder
     
     # 3. Failed logins (last 24h - Sliding window)
-    yesterday = datetime.utcnow() - timedelta(days=1)
+    yesterday = datetime.now(timezone.utc) - timedelta(days=1)
     failed_logins_query = await db.execute(
         select(func.count(models.AuditLog.id))
         .where(models.AuditLog.event_type == "failed_login")
@@ -45,7 +45,7 @@ async def get_statistics(
     failed_logins_24h = failed_logins_query.scalar_one()
 
     # 3.1 Failed logins (Today - Calendar day)
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     failed_logins_today_query = await db.execute(
         select(func.count(models.AuditLog.id))
         .where(models.AuditLog.event_type == "failed_login")
@@ -71,7 +71,7 @@ async def get_statistics(
     
     # 3.4 Decoupled ranges
     # Failed Logins Range
-    f_end_dt = datetime.strptime(f_end, "%Y-%m-%d").date() if f_end else datetime.utcnow().date()
+    f_end_dt = datetime.strptime(f_end, "%Y-%m-%d").date() if f_end else datetime.now(timezone.utc).date()
     f_start_dt = datetime.strptime(f_start, "%Y-%m-%d").date() if f_start else f_end_dt - timedelta(days=6)
     
     failed_logins_range_query = await db.execute(
@@ -85,7 +85,7 @@ async def get_statistics(
     failed_logins_last_7_days = {str(row[0]): row[1] for row in failed_logins_range_query.all()}
 
     # Registrations Range
-    r_end_dt = datetime.strptime(r_end, "%Y-%m-%d").date() if r_end else datetime.utcnow().date()
+    r_end_dt = datetime.strptime(r_end, "%Y-%m-%d").date() if r_end else datetime.now(timezone.utc).date()
     r_start_dt = datetime.strptime(r_start, "%Y-%m-%d").date() if r_start else r_end_dt - timedelta(days=6)
 
     registrations_range_query = await db.execute(
@@ -136,8 +136,8 @@ async def get_statistics(
 
     # 8. Calendar Usage Last 7 Days
     # We will count cycles created/started in the last 7 days as a proxy for calendar usage.
-    calendar_start_dt = datetime.utcnow().date() - timedelta(days=6)
-    calendar_end_dt = datetime.utcnow().date()
+    calendar_start_dt = datetime.now(timezone.utc).date() - timedelta(days=6)
+    calendar_end_dt = datetime.now(timezone.utc).date()
     
     calendar_usage_query = await db.execute(
         select(func.date(models.Cycle.created_at), func.count(models.Cycle.id))
@@ -174,7 +174,7 @@ async def get_security_statistics(
     """
     Get detailed security statistics for admin dashboard.
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     yesterday = now - timedelta(days=1)
 
     # 1. Failed Logins Count (Last 24h)
@@ -228,7 +228,7 @@ async def get_security_statistics(
     db_logs = audit_logs_query.scalars().all()
     
     def format_time_ago(dt: datetime) -> str:
-        diff = datetime.utcnow() - dt
+        diff = datetime.now(timezone.utc) - dt
         if diff.days > 0: return f"Hace {diff.days} d"
         if diff.seconds > 3600: return f"Hace {diff.seconds // 3600} h"
         if diff.seconds > 60: return f"Hace {diff.seconds // 60} min"

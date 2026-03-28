@@ -1,12 +1,12 @@
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from app.db.session import SessionLocal
 from app.models.audit_log import AuditLog
 
 async def seed():
     async with SessionLocal() as db:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # 1. Some failed logins in last 24h
         for i in range(5):
