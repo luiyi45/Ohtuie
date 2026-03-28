@@ -19,6 +19,7 @@ class AdminStatistics(BaseModel):
     age_distribution: Dict[str, int] = {}
     retention_stats: Dict[str, int] = {}
     calendar_usage_last_7_days: Dict[str, int] = {}
+    failed_logins: List[Dict[str, Any]] = []
 
 class SecurityAuditLogEntry(BaseModel):
     id: UUID

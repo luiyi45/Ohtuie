@@ -148,6 +148,22 @@ async def get_statistics(
     )
     calendar_usage_last_7_days = {str(row[0]): row[1] for row in calendar_usage_query.all()}
 
+    # 9. Recent Failed Logins (last 3 for summary)
+    recent_failed_logins_query = await db.execute(
+        select(models.AuditLog)
+        .where(models.AuditLog.event_type == "failed_login")
+        .order_by(desc(models.AuditLog.created_at))
+        .limit(3)
+    )
+    db_failed_logs = recent_failed_logins_query.scalars().all()
+    recent_failed_logins = []
+    for log in db_failed_logs:
+        recent_failed_logins.append({
+            "email": log.metadata_json.get("email", "Desconocido") if log.metadata_json else "Desconocido",
+            "ip_address": log.metadata_json.get("ip", "N/A") if log.metadata_json else "N/A",
+            "timestamp": log.created_at.strftime("%H:%M") # HH:mm format for recent alerts
+        })
+
     return {
         "total_users": total_users,
         "active_users": active_users,
@@ -164,6 +180,7 @@ async def get_statistics(
         "age_distribution": age_distribution,
         "retention_stats": retention_stats,
         "calendar_usage_last_7_days": calendar_usage_last_7_days,
+        "failed_logins": recent_failed_logins, # For Global Reports list
     }
 
 @router.get("/security-stats", response_model=schemas.SecurityStatistics)
@@ -218,10 +235,13 @@ async def get_security_statistics(
         "Token": token_query.scalar_one() or 2
     }
 
-    # 5. Audit Log (Last 20)
+    # 5. Audit Log (Last 24 hours, max 20)
     audit_logs_query = await db.execute(
         select(models.AuditLog)
-        .where(models.AuditLog.event_type.in_(["failed_login", "user_lockout", "admin_action", "data_export", "login"]))
+        .where(
+            models.AuditLog.event_type.in_(["failed_login", "user_lockout", "admin_action", "data_export", "login"]),
+            models.AuditLog.created_at >= yesterday
+        )
         .order_by(desc(models.AuditLog.created_at))
         .limit(20)
     )
