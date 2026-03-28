@@ -3,5 +3,5 @@ from .user import User, UserCreate, UserInDB, UserUpdate, UserRegistration, User
 from .cycle import Cycle, CycleCreate, CycleUpdate, DeleteBatchRequest
 from .daily_log import DailyLog, DailyLogCreate, DailyLogUpdate
 from .msg import Msg
-from .admin import AdminStatistics, SecurityStatistics, SecurityAuditLogEntry
+from .admin import AdminStatistics, SecurityStatistics, SecurityAuditLogEntry, AuditLogCreate
 from .password_reset import PasswordRecoveryRequest, PasswordResetConfirm
