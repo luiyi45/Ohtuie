@@ -23,7 +23,7 @@ async def seed():
         db.add(AuditLog(
             id=uuid4(),
             event_type="user_lockout",
-            description="Usuario bloqueado: bad_actor@mail.com",
+            description="Usuario bloqueado temporalmente: bad_actor@mail.com",
             metadata_json={"email": "bad_actor@mail.com"},
             created_at=now - timedelta(hours=1)
         ))
@@ -34,6 +34,14 @@ async def seed():
             description="Exportación de datos de usuarias: Admin01",
             metadata_json={"admin": "Admin01"},
             created_at=now - timedelta(hours=3)
+        ))
+
+        db.add(AuditLog(
+            id=uuid4(),
+            event_type="login",
+            description="Sesión administrativa iniciada: SuperUser",
+            metadata_json={"admin": "SuperUser"},
+            created_at=now - timedelta(hours=5)
         ))
 
         await db.commit()

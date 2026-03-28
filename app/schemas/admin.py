@@ -34,3 +34,8 @@ class SecurityStatistics(BaseModel):
     admin_sessions: int
     risk_distribution: Dict[str, int] # e.g., {"Pass": 45, "User": 30, "Token": 25}
     audit_log: List[SecurityAuditLogEntry]
+
+class AuditLogCreate(BaseModel):
+    event_type: str
+    description: str
+    metadata_json: Optional[Dict[str, Any]] = None

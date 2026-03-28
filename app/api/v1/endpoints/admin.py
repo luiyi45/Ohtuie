@@ -236,13 +236,25 @@ async def get_security_statistics(
 
     formatted_logs = []
     for log in db_logs:
-        log_type = "info"
-        if "fallido" in log.description.lower() or "failed" in log.description.lower():
+        # Determine log type based on event_type first
+        if log.event_type == "failed_login":
             log_type = "warning"
-        elif "bloqueo" in log.description.lower() or "lockout" in log.description.lower():
+        elif log.event_type == "user_lockout":
             log_type = "danger"
-        elif "iniciada" in log.description.lower() or "success" in log.description.lower():
+        elif log.event_type == "login" or log.event_type == "success":
             log_type = "success"
+        elif log.event_type == "data_export":
+            log_type = "info"
+        else:
+            # Fallback to description-based logic
+            log_type = "info"
+            desc_lower = log.description.lower()
+            if "fallido" in desc_lower or "failed" in desc_lower:
+                log_type = "warning"
+            elif "bloqueo" in desc_lower or "lockout" in desc_lower:
+                log_type = "danger"
+            elif "iniciada" in desc_lower or "success" in desc_lower:
+                log_type = "success"
             
         formatted_logs.append({
             "id": log.id,
@@ -260,6 +272,24 @@ async def get_security_statistics(
         "risk_distribution": risk_dist,
         "audit_log": formatted_logs
     }
+
+@router.post("/audit-log", response_model=schemas.Msg)
+async def create_audit_log(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+    log_in: schemas.AuditLogCreate
+) -> Any:
+    """
+    Create a new audit log entry for administrative actions.
+    """
+    await crud.audit_log.create(
+        db,
+        event_type=log_in.event_type,
+        description=log_in.description,
+        metadata_json=log_in.metadata_json
+    )
+    return {"msg": "Audit log created"}
 
 @router.post("/verify-password", response_model=schemas.Msg)
 async def verify_admin_password(

@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
@@ -23,10 +23,21 @@ async def login_access_token(
             db, email=form_data.username, password=form_data.password
         )
         if not user:
+            # Check if it was because of lockout
+            user_db = await crud.user.get_by_email(db, email=form_data.username)
+            if user_db and user_db.locked_until and user_db.locked_until > datetime.now(timezone.utc):
+                await crud.audit_log.create(
+                    db, 
+                    event_type="user_lockout", 
+                    description=f"Usuario bloqueado temporalmente: {form_data.username}",
+                    metadata_json={"email": form_data.username, "user_id": str(user_db.id)}
+                )
+                raise HTTPException(status_code=400, detail="Account is temporarily locked due to multiple failed attempts")
+            
             await crud.audit_log.create(
                 db, 
                 event_type="failed_login", 
-                description=f"Login fallido para el email: {form_data.username}",
+                description=f"Intento de acceso fallido: {form_data.username}",
                 metadata_json={"email": form_data.username}
             )
             raise HTTPException(status_code=400, detail="Incorrect email or password")
