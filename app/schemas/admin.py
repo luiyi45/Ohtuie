@@ -1,5 +1,7 @@
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from uuid import UUID
+from datetime import datetime
 
 class AdminStatistics(BaseModel):
     total_users: int
@@ -17,3 +19,18 @@ class AdminStatistics(BaseModel):
     age_distribution: Dict[str, int] = {}
     retention_stats: Dict[str, int] = {}
     calendar_usage_last_7_days: Dict[str, int] = {}
+
+class SecurityAuditLogEntry(BaseModel):
+    id: UUID
+    action: str
+    detail: str
+    time: str
+    type: str # warning, danger, info, success
+    created_at: datetime
+
+class SecurityStatistics(BaseModel):
+    failed_logins_count: int
+    active_lockouts: int
+    admin_sessions: int
+    risk_distribution: Dict[str, int] # e.g., {"Pass": 45, "User": 30, "Token": 25}
+    audit_log: List[SecurityAuditLogEntry]
