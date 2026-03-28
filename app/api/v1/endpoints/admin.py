@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, text
+from sqlalchemy import select, func, desc, text, String
 
 from app import crud, models, schemas
 from app.api import deps
@@ -199,7 +199,7 @@ async def get_security_statistics(
     # 3. Admin Sessions (Logged in last 24h)
     admin_sessions_query = await db.execute(
         select(func.count(models.User.id.distinct()))
-        .join(models.AuditLog, models.AuditLog.metadata_json["user_id"].astext == models.User.id.cast(text("text")))
+        .join(models.AuditLog, models.AuditLog.metadata_json["user_id"].astext == models.User.id.cast(String))
         .where(models.User.role == "admin")
         .where(models.AuditLog.event_type == "login")
         .where(models.AuditLog.created_at >= yesterday)
