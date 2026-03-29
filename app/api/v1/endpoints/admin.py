@@ -32,7 +32,15 @@ async def get_statistics(
     total_cycles_query = await db.execute(select(func.count(models.Cycle.id)))
     total_cycles = total_cycles_query.scalar_one()
     
-    avg_cycle_duration = 28.0 # Placeholder
+    # Calculate real average cycle duration (only for completed cycles)
+    avg_cycle_query = await db.execute(
+        select(func.avg(models.Cycle.end_date - models.Cycle.start_date))
+        .where(models.Cycle.end_date != None)
+    )
+    db_avg = avg_cycle_query.scalar()
+    # SQLAlchemy might return a timedelta object or float depending on the driver
+    avg_cycle_duration = float(db_avg.days) if db_avg and hasattr(db_avg, 'days') else float(db_avg) if db_avg else 28.0
+    
     avg_period_duration = 5.0 # Placeholder
     
     # 3. Failed logins (last 24h - Sliding window)
@@ -45,18 +53,23 @@ async def get_statistics(
     failed_logins_24h = failed_logins_query.scalar_one()
 
     # 3.1 Failed logins (Today - Calendar day)
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    # Correcting today_start to UTC-5
+    today_now_local = datetime.now(timezone.utc) - timedelta(hours=5)
+    today_start = today_now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # We need to compare created_at (UTC) with today_start (adjusted)
+    # Or better, compare adjusted created_at with today_start
     failed_logins_today_query = await db.execute(
         select(func.count(models.AuditLog.id))
         .where(models.AuditLog.event_type == "failed_login")
-        .where(models.AuditLog.created_at >= today_start)
+        .where(models.AuditLog.created_at - text("INTERVAL '5 hours'") >= today_start)
     )
     failed_logins_today = failed_logins_today_query.scalar_one()
 
     # 3.2 Registrations (Today)
     registrations_today_query = await db.execute(
         select(func.count(models.User.id))
-        .where(models.User.created_at >= today_start)
+        .where(models.User.created_at - text("INTERVAL '5 hours'") >= today_start)
     )
     registrations_today = registrations_today_query.scalar_one()
 
@@ -65,7 +78,7 @@ async def get_statistics(
     suspicious_query = await db.execute(
         select(func.count(models.User.id))
         .where(models.User.full_name == None)
-        .where(models.User.created_at >= today_start)
+        .where(models.User.created_at - text("INTERVAL '5 hours'") >= today_start)
     )
     suspicious_registrations_count = suspicious_query.scalar_one()
     
@@ -134,17 +147,20 @@ async def get_statistics(
         "Eliminadas": deleted_users,
     }
 
-    # 8. Calendar Usage Last 7 Days
-    # We will count cycles created/started in the last 7 days as a proxy for calendar usage.
-    calendar_start_dt = datetime.now(timezone.utc).date() - timedelta(days=6)
-    calendar_end_dt = datetime.now(timezone.utc).date()
+    # 8. Weekly App Usage (Unique users per day)
+    # We count unique users in AuditLog per day as a proxy for app usage.
+    calendar_start_dt = (datetime.now(timezone.utc) - timedelta(hours=5)).date() - timedelta(days=6)
+    calendar_end_dt = (datetime.now(timezone.utc) - timedelta(hours=5)).date()
     
     calendar_usage_query = await db.execute(
-        select(func.date(models.Cycle.created_at - text("INTERVAL '5 hours'")), func.count(models.Cycle.id))
-        .where(func.date(models.Cycle.created_at - text("INTERVAL '5 hours'")) >= calendar_start_dt)
-        .where(func.date(models.Cycle.created_at - text("INTERVAL '5 hours'")) <= calendar_end_dt)
-        .group_by(func.date(models.Cycle.created_at - text("INTERVAL '5 hours'")))
-        .order_by(func.date(models.Cycle.created_at - text("INTERVAL '5 hours'")))
+        select(
+            func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")),
+            func.count(func.distinct(models.AuditLog.metadata_json["user_id"].astext))
+        )
+        .where(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")) >= calendar_start_dt)
+        .where(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")) <= calendar_end_dt)
+        .group_by(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")))
+        .order_by(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")))
     )
     calendar_usage_last_7_days = {str(row[0]): row[1] for row in calendar_usage_query.all()}
 
