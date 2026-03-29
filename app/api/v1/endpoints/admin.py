@@ -75,12 +75,12 @@ async def get_statistics(
     f_start_dt = datetime.strptime(f_start, "%Y-%m-%d").date() if f_start else f_end_dt - timedelta(days=6)
     
     failed_logins_range_query = await db.execute(
-        select(func.date(models.AuditLog.created_at), func.count(models.AuditLog.id))
+        select(func.date(func.timezone('-05', func.timezone('UTC', models.AuditLog.created_at))), func.count(models.AuditLog.id))
         .where(models.AuditLog.event_type == "failed_login")
-        .where(func.date(models.AuditLog.created_at) >= f_start_dt)
-        .where(func.date(models.AuditLog.created_at) <= f_end_dt)
-        .group_by(func.date(models.AuditLog.created_at))
-        .order_by(func.date(models.AuditLog.created_at))
+        .where(func.date(func.timezone('-05', func.timezone('UTC', models.AuditLog.created_at))) >= f_start_dt)
+        .where(func.date(func.timezone('-05', func.timezone('UTC', models.AuditLog.created_at))) <= f_end_dt)
+        .group_by(func.date(func.timezone('-05', func.timezone('UTC', models.AuditLog.created_at))))
+        .order_by(func.date(func.timezone('-05', func.timezone('UTC', models.AuditLog.created_at))))
     )
     failed_logins_last_7_days = {str(row[0]): row[1] for row in failed_logins_range_query.all()}
 
@@ -89,11 +89,11 @@ async def get_statistics(
     r_start_dt = datetime.strptime(r_start, "%Y-%m-%d").date() if r_start else r_end_dt - timedelta(days=6)
 
     registrations_range_query = await db.execute(
-        select(func.date(models.User.created_at), func.count(models.User.id))
-        .where(func.date(models.User.created_at) >= r_start_dt)
-        .where(func.date(models.User.created_at) <= r_end_dt)
-        .group_by(func.date(models.User.created_at))
-        .order_by(func.date(models.User.created_at))
+        select(func.date(func.timezone('-05', func.timezone('UTC', models.User.created_at))), func.count(models.User.id))
+        .where(func.date(func.timezone('-05', func.timezone('UTC', models.User.created_at))) >= r_start_dt)
+        .where(func.date(func.timezone('-05', func.timezone('UTC', models.User.created_at))) <= r_end_dt)
+        .group_by(func.date(func.timezone('-05', func.timezone('UTC', models.User.created_at))))
+        .order_by(func.date(func.timezone('-05', func.timezone('UTC', models.User.created_at))))
     )
     user_registrations_last_7_days = {str(row[0]): row[1] for row in registrations_range_query.all()}
     
@@ -140,11 +140,11 @@ async def get_statistics(
     calendar_end_dt = datetime.now(timezone.utc).date()
     
     calendar_usage_query = await db.execute(
-        select(func.date(models.Cycle.created_at), func.count(models.Cycle.id))
-        .where(func.date(models.Cycle.created_at) >= calendar_start_dt)
-        .where(func.date(models.Cycle.created_at) <= calendar_end_dt)
-        .group_by(func.date(models.Cycle.created_at))
-        .order_by(func.date(models.Cycle.created_at))
+        select(func.date(func.timezone('-05', func.timezone('UTC', models.Cycle.created_at))), func.count(models.Cycle.id))
+        .where(func.date(func.timezone('-05', func.timezone('UTC', models.Cycle.created_at))) >= calendar_start_dt)
+        .where(func.date(func.timezone('-05', func.timezone('UTC', models.Cycle.created_at))) <= calendar_end_dt)
+        .group_by(func.date(func.timezone('-05', func.timezone('UTC', models.Cycle.created_at))))
+        .order_by(func.date(func.timezone('-05', func.timezone('UTC', models.Cycle.created_at))))
     )
     calendar_usage_last_7_days = {str(row[0]): row[1] for row in calendar_usage_query.all()}
 
