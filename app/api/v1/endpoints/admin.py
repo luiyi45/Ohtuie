@@ -91,14 +91,14 @@ async def get_statistics(
     failed_logins_today_query = await db.execute(
         select(func.count(models.AuditLog.id))
         .where(models.AuditLog.event_type == "failed_login")
-        .where(models.AuditLog.created_at - text("INTERVAL '5 hours'") >= today_start)
+        .where(models.AuditLog.created_at - timedelta(hours=5) >= today_start)
     )
     failed_logins_today = failed_logins_today_query.scalar_one()
 
     # 3.2 Registrations (Today)
     registrations_today_query = await db.execute(
         select(func.count(models.User.id))
-        .where(models.User.role == "user", models.User.created_at - text("INTERVAL '5 hours'") >= today_start)
+        .where(models.User.role == "user", models.User.created_at - timedelta(hours=5) >= today_start)
     )
     registrations_today = registrations_today_query.scalar_one()
 
@@ -108,7 +108,7 @@ async def get_statistics(
         select(func.count(models.User.id))
         .where(
             (models.User.role == "user") &
-            (models.User.created_at - text("INTERVAL '5 hours'") >= today_start) &
+            (models.User.created_at - timedelta(hours=5) >= today_start) &
             (
                 (models.User.full_name == None) | 
                 (models.User.cycle_duration == None) | 
@@ -122,7 +122,7 @@ async def get_statistics(
     duplicate_ips_query = await db.execute(
         select(models.AuditLog.metadata_json["ip"].astext)
         .where(models.AuditLog.event_type == "user_registration")
-        .where(models.AuditLog.created_at - text("INTERVAL '5 hours'") >= today_start)
+        .where(models.AuditLog.created_at - timedelta(hours=5) >= today_start)
         .group_by(models.AuditLog.metadata_json["ip"].astext)
         .having(func.count(models.AuditLog.id) >= 3)
     )
@@ -134,7 +134,7 @@ async def get_statistics(
             select(func.count(models.AuditLog.id))
             .where(models.AuditLog.event_type == "user_registration")
             .where(models.AuditLog.metadata_json["ip"].astext.in_(suspicious_ips))
-            .where(models.AuditLog.created_at - text("INTERVAL '5 hours'") >= today_start)
+            .where(models.AuditLog.created_at - timedelta(hours=5) >= today_start)
         )
         ip_users_count = ip_count_query.scalar_one()
 
@@ -147,12 +147,12 @@ async def get_statistics(
     f_start_dt = datetime.strptime(f_start, "%Y-%m-%d").date() if f_start else f_end_dt - timedelta(days=6)
     
     failed_logins_range_query = await db.execute(
-        select(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")), func.count(models.AuditLog.id))
+        select(func.date(models.AuditLog.created_at - timedelta(hours=5)), func.count(models.AuditLog.id))
         .where(models.AuditLog.event_type == "failed_login")
-        .where(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")) >= f_start_dt)
-        .where(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")) <= f_end_dt)
-        .group_by(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")))
-        .order_by(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")))
+        .where(func.date(models.AuditLog.created_at - timedelta(hours=5)) >= f_start_dt)
+        .where(func.date(models.AuditLog.created_at - timedelta(hours=5)) <= f_end_dt)
+        .group_by(func.date(models.AuditLog.created_at - timedelta(hours=5)))
+        .order_by(func.date(models.AuditLog.created_at - timedelta(hours=5)))
     )
     failed_logins_last_7_days = {str(row[0]): row[1] for row in failed_logins_range_query.all()}
 
@@ -161,12 +161,12 @@ async def get_statistics(
     r_start_dt = datetime.strptime(r_start, "%Y-%m-%d").date() if r_start else r_end_dt - timedelta(days=6)
 
     registrations_range_query = await db.execute(
-        select(func.date(models.User.created_at - text("INTERVAL '5 hours'")), func.count(models.User.id))
+        select(func.date(models.User.created_at - timedelta(hours=5)), func.count(models.User.id))
         .where(models.User.role == "user", models.User.deleted_at == None)
-        .where(func.date(models.User.created_at - text("INTERVAL '5 hours'")) >= r_start_dt)
-        .where(func.date(models.User.created_at - text("INTERVAL '5 hours'")) <= r_end_dt)
-        .group_by(func.date(models.User.created_at - text("INTERVAL '5 hours'")))
-        .order_by(func.date(models.User.created_at - text("INTERVAL '5 hours'")))
+        .where(func.date(models.User.created_at - timedelta(hours=5)) >= r_start_dt)
+        .where(func.date(models.User.created_at - timedelta(hours=5)) <= r_end_dt)
+        .group_by(func.date(models.User.created_at - timedelta(hours=5)))
+        .order_by(func.date(models.User.created_at - timedelta(hours=5)))
     )
     user_registrations_last_7_days = {str(row[0]): row[1] for row in registrations_range_query.all()}
     
@@ -225,13 +225,13 @@ async def get_statistics(
     
     calendar_usage_query = await db.execute(
         select(
-            func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")),
+            func.date(models.AuditLog.created_at - timedelta(hours=5)),
             func.count(func.distinct(models.AuditLog.metadata_json["user_id"].astext))
         )
-        .where(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")) >= calendar_start_dt)
-        .where(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")) <= calendar_end_dt)
-        .group_by(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")))
-        .order_by(func.date(models.AuditLog.created_at - text("INTERVAL '5 hours'")))
+        .where(func.date(models.AuditLog.created_at - timedelta(hours=5)) >= calendar_start_dt)
+        .where(func.date(models.AuditLog.created_at - timedelta(hours=5)) <= calendar_end_dt)
+        .group_by(func.date(models.AuditLog.created_at - timedelta(hours=5)))
+        .order_by(func.date(models.AuditLog.created_at - timedelta(hours=5)))
     )
     calendar_usage_last_7_days = {str(row[0]): row[1] for row in calendar_usage_query.all()}
 
