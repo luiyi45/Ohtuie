@@ -1,5 +1,4 @@
-from typing import Any, List, Optional
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -151,6 +150,7 @@ async def create_user_open(
     *,
     db: AsyncSession = Depends(deps.get_db),
     reg_in: schemas.UserRegistration,
+    request: Request,
 ) -> Any:
     """
     Create new user without needing to be logged in.
@@ -176,6 +176,19 @@ async def create_user_open(
             notes="Registro inicial"
         )
         await crud.cycle.create_with_owner(db, obj_in=cycle_in, user_id=user.id)
+    
+    # Log registration with IP
+    client_ip = request.client.host if request.client else "unknown"
+    await crud.audit_log.create(
+        db,
+        event_type="user_registration",
+        description=f"Nuevo registro: {user.email}",
+        metadata_json={
+            "email": user.email,
+            "ip": client_ip,
+            "user_id": str(user.id)
+        }
+    )
         
     return user
 

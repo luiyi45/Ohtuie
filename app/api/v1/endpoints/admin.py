@@ -102,14 +102,44 @@ async def get_statistics(
     )
     registrations_today = registrations_today_query.scalar_one()
 
-    # 3.3 Suspicious registrations (Placeholder heuristic: users without full_name or inactive on creation)
-    # Using users without full_name as a "suspicious" indicator for now.
-    suspicious_query = await db.execute(
+    # 3.3 Suspicious registrations (Refined heuristic)
+    # Rule 1: Incomplete profiles (no name or no durations)
+    suspicious_users_query = await db.execute(
         select(func.count(models.User.id))
-        .where(models.User.full_name == None)
-        .where(models.User.created_at - text("INTERVAL '5 hours'") >= today_start)
+        .where(
+            (models.User.role == "user") &
+            (models.User.created_at - text("INTERVAL '5 hours'") >= today_start) &
+            (
+                (models.User.full_name == None) | 
+                (models.User.cycle_duration == None) | 
+                (models.User.period_duration == None)
+            )
+        )
     )
-    suspicious_registrations_count = suspicious_query.scalar_one()
+    incomplete_count = suspicious_users_query.scalar_one()
+
+    # Rule 2: Duplicate IPs (3+ registrations from same IP today)
+    duplicate_ips_query = await db.execute(
+        select(models.AuditLog.metadata_json["ip"].astext)
+        .where(models.AuditLog.event_type == "user_registration")
+        .where(models.AuditLog.created_at - text("INTERVAL '5 hours'") >= today_start)
+        .group_by(models.AuditLog.metadata_json["ip"].astext)
+        .having(func.count(models.AuditLog.id) >= 3)
+    )
+    suspicious_ips = [row[0] for row in duplicate_ips_query.all()]
+    
+    ip_users_count = 0
+    if suspicious_ips:
+        ip_count_query = await db.execute(
+            select(func.count(models.AuditLog.id))
+            .where(models.AuditLog.event_type == "user_registration")
+            .where(models.AuditLog.metadata_json["ip"].astext.in_(suspicious_ips))
+            .where(models.AuditLog.created_at - text("INTERVAL '5 hours'") >= today_start)
+        )
+        ip_users_count = ip_count_query.scalar_one()
+
+    # Combine metrics (using max as a simple overlapping heuristic)
+    suspicious_registrations_count = max(incomplete_count, ip_users_count)
     
     # 3.4 Decoupled ranges
     # Failed Logins Range
