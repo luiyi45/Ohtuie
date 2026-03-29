@@ -21,11 +21,17 @@ async def get_statistics(
     """
     Get system-wide statistics for admin dashboard.
     """
-    # 1. User counts
-    total_users_query = await db.execute(select(func.count(models.User.id)))
+    # 1. User counts (Excluding admins and deleted users for consistency with user list)
+    total_users_query = await db.execute(
+        select(func.count(models.User.id))
+        .where(models.User.role == "user", models.User.deleted_at == None)
+    )
     total_users = total_users_query.scalar_one()
     
-    active_users_query = await db.execute(select(func.count(models.User.id)).where(models.User.is_active == True))
+    active_users_query = await db.execute(
+        select(func.count(models.User.id))
+        .where(models.User.role == "user", models.User.is_active == True, models.User.deleted_at == None)
+    )
     active_users = active_users_query.scalar_one()
     
     # 2. Cycle metrics
@@ -39,9 +45,15 @@ async def get_statistics(
     )
     db_avg = avg_cycle_query.scalar()
     # SQLAlchemy might return a timedelta object or float depending on the driver
-    avg_cycle_duration = float(db_avg.days) if db_avg and hasattr(db_avg, 'days') else float(db_avg) if db_avg else 28.0
+    avg_cycle_duration = int(db_avg.days) if db_avg and hasattr(db_avg, 'days') else int(db_avg) if db_avg else 28
     
-    avg_period_duration = 5.0 # Placeholder
+    # Calculate real average period duration
+    avg_period_query = await db.execute(
+        select(func.avg(models.User.period_duration))
+        .where(models.User.role == "user", models.User.period_duration != None)
+    )
+    db_p_avg = avg_period_query.scalar()
+    avg_period_duration = int(float(db_p_avg)) if db_p_avg else 5
     
     # 3. Failed logins (last 24h - Sliding window)
     yesterday = datetime.now(timezone.utc) - timedelta(days=1)
@@ -69,7 +81,7 @@ async def get_statistics(
     # 3.2 Registrations (Today)
     registrations_today_query = await db.execute(
         select(func.count(models.User.id))
-        .where(models.User.created_at - text("INTERVAL '5 hours'") >= today_start)
+        .where(models.User.role == "user", models.User.created_at - text("INTERVAL '5 hours'") >= today_start)
     )
     registrations_today = registrations_today_query.scalar_one()
 
@@ -103,6 +115,7 @@ async def get_statistics(
 
     registrations_range_query = await db.execute(
         select(func.date(models.User.created_at - text("INTERVAL '5 hours'")), func.count(models.User.id))
+        .where(models.User.role == "user", models.User.deleted_at == None)
         .where(func.date(models.User.created_at - text("INTERVAL '5 hours'")) >= r_start_dt)
         .where(func.date(models.User.created_at - text("INTERVAL '5 hours'")) <= r_end_dt)
         .group_by(func.date(models.User.created_at - text("INTERVAL '5 hours'")))
@@ -124,7 +137,7 @@ async def get_statistics(
             """),
             func.count(models.User.id)
         )
-        .where(models.User.birthday != None)
+        .where(models.User.role == "user", models.User.deleted_at == None, models.User.birthday != None)
         .group_by(text("age_range"))
     )
     age_distribution = {row[0]: row[1] for row in age_query.all()}
