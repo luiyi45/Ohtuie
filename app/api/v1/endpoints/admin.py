@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, text, String
+from sqlalchemy import select, func, desc, text, String, cast, Date
 
 from app import crud, models, schemas
 from app.api import deps
@@ -147,12 +147,12 @@ async def get_statistics(
     f_start_dt = datetime.strptime(f_start, "%Y-%m-%d").date() if f_start else f_end_dt - timedelta(days=6)
     
     failed_logins_range_query = await db.execute(
-        select(func.date(models.AuditLog.created_at - timedelta(hours=5)), func.count(models.AuditLog.id))
+        select(cast(models.AuditLog.created_at - timedelta(hours=5), Date), func.count(models.AuditLog.id))
         .where(models.AuditLog.event_type == "failed_login")
-        .where(func.date(models.AuditLog.created_at - timedelta(hours=5)) >= f_start_dt)
-        .where(func.date(models.AuditLog.created_at - timedelta(hours=5)) <= f_end_dt)
-        .group_by(func.date(models.AuditLog.created_at - timedelta(hours=5)))
-        .order_by(func.date(models.AuditLog.created_at - timedelta(hours=5)))
+        .where(cast(models.AuditLog.created_at - timedelta(hours=5), Date) >= f_start_dt)
+        .where(cast(models.AuditLog.created_at - timedelta(hours=5), Date) <= f_end_dt)
+        .group_by(cast(models.AuditLog.created_at - timedelta(hours=5), Date))
+        .order_by(cast(models.AuditLog.created_at - timedelta(hours=5), Date))
     )
     failed_logins_last_7_days = {str(row[0]): row[1] for row in failed_logins_range_query.all()}
 
@@ -161,12 +161,12 @@ async def get_statistics(
     r_start_dt = datetime.strptime(r_start, "%Y-%m-%d").date() if r_start else r_end_dt - timedelta(days=6)
 
     registrations_range_query = await db.execute(
-        select(func.date(models.User.created_at - timedelta(hours=5)), func.count(models.User.id))
+        select(cast(models.User.created_at - timedelta(hours=5), Date), func.count(models.User.id))
         .where(models.User.role == "user", models.User.deleted_at == None)
-        .where(func.date(models.User.created_at - timedelta(hours=5)) >= r_start_dt)
-        .where(func.date(models.User.created_at - timedelta(hours=5)) <= r_end_dt)
-        .group_by(func.date(models.User.created_at - timedelta(hours=5)))
-        .order_by(func.date(models.User.created_at - timedelta(hours=5)))
+        .where(cast(models.User.created_at - timedelta(hours=5), Date) >= r_start_dt)
+        .where(cast(models.User.created_at - timedelta(hours=5), Date) <= r_end_dt)
+        .group_by(cast(models.User.created_at - timedelta(hours=5), Date))
+        .order_by(cast(models.User.created_at - timedelta(hours=5), Date))
     )
     user_registrations_last_7_days = {str(row[0]): row[1] for row in registrations_range_query.all()}
     
@@ -225,13 +225,13 @@ async def get_statistics(
     
     calendar_usage_query = await db.execute(
         select(
-            func.date(models.AuditLog.created_at - timedelta(hours=5)),
+            cast(models.AuditLog.created_at - timedelta(hours=5), Date),
             func.count(func.distinct(models.AuditLog.metadata_json["user_id"].astext))
         )
-        .where(func.date(models.AuditLog.created_at - timedelta(hours=5)) >= calendar_start_dt)
-        .where(func.date(models.AuditLog.created_at - timedelta(hours=5)) <= calendar_end_dt)
-        .group_by(func.date(models.AuditLog.created_at - timedelta(hours=5)))
-        .order_by(func.date(models.AuditLog.created_at - timedelta(hours=5)))
+        .where(cast(models.AuditLog.created_at - timedelta(hours=5), Date) >= calendar_start_dt)
+        .where(cast(models.AuditLog.created_at - timedelta(hours=5), Date) <= calendar_end_dt)
+        .group_by(cast(models.AuditLog.created_at - timedelta(hours=5), Date))
+        .order_by(cast(models.AuditLog.created_at - timedelta(hours=5), Date))
     )
     calendar_usage_last_7_days = {str(row[0]): row[1] for row in calendar_usage_query.all()}
 
