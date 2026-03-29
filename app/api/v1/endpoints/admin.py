@@ -176,6 +176,17 @@ async def get_statistics(
         "Bloqueadas": blocked_users,
         "Eliminadas": deleted_users,
     }
+    
+    # New: Detailed count for Security Status board
+    now = datetime.now(timezone.utc)
+    locked_users_query = await db.execute(
+        select(func.count(models.User.id))
+        .where(
+            (models.User.role == "user") & 
+            ((models.User.locked_until > now) | (models.User.is_active == False))
+        )
+    )
+    blocked_users_count = locked_users_query.scalar_one()
 
     # 8. Weekly App Usage (Unique users per day)
     # We count unique users in AuditLog per day as a proxy for app usage.
@@ -227,6 +238,7 @@ async def get_statistics(
         "retention_stats": retention_stats,
         "calendar_usage_last_7_days": calendar_usage_last_7_days,
         "failed_logins": recent_failed_logins, # For Global Reports list
+        "blocked_users_count": blocked_users_count,
     }
 
 @router.get("/security-stats", response_model=schemas.SecurityStatistics)

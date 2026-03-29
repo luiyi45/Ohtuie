@@ -20,6 +20,7 @@ class AdminStatistics(BaseModel):
     retention_stats: Dict[str, int] = {}
     calendar_usage_last_7_days: Dict[str, int] = {}
     failed_logins: List[Dict[str, Any]] = []
+    blocked_users_count: int = 0
 
 class SecurityAuditLogEntry(BaseModel):
     id: UUID
