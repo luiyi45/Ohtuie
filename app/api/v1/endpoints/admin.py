@@ -38,14 +38,31 @@ async def get_statistics(
     total_cycles_query = await db.execute(select(func.count(models.Cycle.id)))
     total_cycles = total_cycles_query.scalar_one()
     
-    # Calculate real average cycle duration (only for completed cycles)
+    # Calculate real average cycle duration (between consecutive start dates)
+    # Using a window function to find the duration of full cycles
+    from sqlalchemy import over
+    cycle_diff_subquery = (
+        select(
+            models.Cycle.user_id,
+            models.Cycle.start_date.label("current_start"),
+            func.lead(models.Cycle.start_date)
+                .over(partition_by=models.Cycle.user_id, order_by=models.Cycle.start_date)
+                .label("next_start")
+        )
+        .subquery()
+    )
+    
     avg_cycle_query = await db.execute(
-        select(func.avg(models.Cycle.end_date - models.Cycle.start_date))
-        .where(models.Cycle.end_date != None)
+        select(func.avg(cycle_diff_subquery.c.next_start - cycle_diff_subquery.c.current_start))
+        .where(
+            cycle_diff_subquery.c.next_start != None,
+            (cycle_diff_subquery.c.next_start - cycle_diff_subquery.c.current_start) >= 15,
+            (cycle_diff_subquery.c.next_start - cycle_diff_subquery.c.current_start) <= 50
+        )
     )
     db_avg = avg_cycle_query.scalar()
     # SQLAlchemy might return a timedelta object or float depending on the driver
-    avg_cycle_duration = int(db_avg.days) if db_avg and hasattr(db_avg, 'days') else int(db_avg) if db_avg else 28
+    avg_cycle_duration = int(db_avg.days) if db_avg and hasattr(db_avg, 'days') else int(float(db_avg)) if db_avg else 28
     
     # Calculate real average period duration
     avg_period_query = await db.execute(
