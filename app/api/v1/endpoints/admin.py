@@ -296,9 +296,9 @@ async def get_security_statistics(
     token_query = await db.execute(select(func.count(models.AuditLog.id)).where(models.AuditLog.event_type == "failed_login").where(models.AuditLog.description.contains("Token")))
     
     risk_dist = {
-        "Pass": pass_query.scalar_one() or 10,
-        "User": user_query.scalar_one() or 5,
-        "Token": token_query.scalar_one() or 2
+        "Pass": pass_query.scalar_one(),
+        "User": user_query.scalar_one(),
+        "Token": token_query.scalar_one()
     }
 
     # 5. Audit Log (Last 24 hours, max 20)
