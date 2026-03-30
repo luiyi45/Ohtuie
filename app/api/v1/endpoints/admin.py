@@ -199,10 +199,23 @@ async def get_statistics(
     )
     calendar_usage_last_7_days = {str(row[0]): row[1] for row in calendar_usage_query.all()}
 
-    # 9. Recent Failed Logins (last 3 for summary)
+    # 8.5 Users who logged in today (Activas Hoy)
+    today_now_local = datetime.now(timezone.utc) - timedelta(hours=5)
+    today_start = today_now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    logged_in_today_query = await db.execute(
+        select(func.count(func.distinct(models.AuditLog.metadata_json["user_id"].astext)))
+        .where(models.AuditLog.event_type == "login")
+        .where(models.AuditLog.created_at - timedelta(hours=5) >= today_start)
+    )
+    logged_in_today = logged_in_today_query.scalar_one()
+
+    # 9. Recent Failed Logins (last 3 for summary, last 24h)
+    yesterday_24h = datetime.now(timezone.utc) - timedelta(days=1)
     recent_failed_logins_query = await db.execute(
         select(models.AuditLog)
         .where(models.AuditLog.event_type == "failed_login")
+        .where(models.AuditLog.created_at >= yesterday_24h)
         .order_by(desc(models.AuditLog.created_at))
         .limit(3)
     )
@@ -233,6 +246,7 @@ async def get_statistics(
         "calendar_usage_last_7_days": calendar_usage_last_7_days,
         "failed_logins": recent_failed_logins, # For Global Reports list
         "blocked_users_count": blocked_users_count,
+        "logged_in_today": logged_in_today,
     }
 
 @router.get("/security-stats", response_model=schemas.SecurityStatistics)
