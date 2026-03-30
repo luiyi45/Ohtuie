@@ -102,24 +102,8 @@ async def get_statistics(
     )
     registrations_today = registrations_today_query.scalar_one()
 
-    # 3.3 Suspicious registrations (Refined heuristic)
-    # Rule 1: Incomplete profiles (no name or no durations)
-    suspicious_users_query = await db.execute(
-        select(func.count(models.User.id))
-        .where(
-            (models.User.role == "user") &
-            (models.User.created_at - timedelta(hours=5) >= today_start) &
-            (
-                (models.User.full_name == None) | 
-                (models.User.cycle_duration == None) | 
-                (models.User.period_duration == None)
-            )
-        )
-    )
-    incomplete_count = suspicious_users_query.scalar_one()
-
-    # Combine metrics (only incomplete profiles for now)
-    suspicious_registrations_count = incomplete_count
+    # 3.3 Suspicious registrations (Disabled for stability)
+    suspicious_registrations_count = 0
     
     # 3.4 Decoupled ranges
     # Failed Logins Range
