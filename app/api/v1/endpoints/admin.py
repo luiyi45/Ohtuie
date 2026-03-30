@@ -131,8 +131,8 @@ async def get_statistics(
         .where(models.AuditLog.event_type == "failed_login")
         .where(cast(models.AuditLog.created_at - timedelta(hours=5), Date) >= f_start_dt)
         .where(cast(models.AuditLog.created_at - timedelta(hours=5), Date) <= f_end_dt)
-        .group_by(cast(models.AuditLog.created_at - timedelta(hours=5), Date))
-        .order_by(cast(models.AuditLog.created_at - timedelta(hours=5), Date))
+        .group_by(text("1"))
+        .order_by(text("1"))
     )
     failed_logins_last_7_days = {str(row[0]): row[1] for row in failed_logins_range_query.all()}
 
@@ -145,8 +145,8 @@ async def get_statistics(
         .where(models.User.role == "user", models.User.deleted_at == None)
         .where(cast(models.User.created_at - timedelta(hours=5), Date) >= r_start_dt)
         .where(cast(models.User.created_at - timedelta(hours=5), Date) <= r_end_dt)
-        .group_by(cast(models.User.created_at - timedelta(hours=5), Date))
-        .order_by(cast(models.User.created_at - timedelta(hours=5), Date))
+        .group_by(text("1"))
+        .order_by(text("1"))
     )
     user_registrations_last_7_days = {str(row[0]): row[1] for row in registrations_range_query.all()}
     
@@ -210,8 +210,8 @@ async def get_statistics(
         )
         .where(cast(models.AuditLog.created_at - timedelta(hours=5), Date) >= calendar_start_dt)
         .where(cast(models.AuditLog.created_at - timedelta(hours=5), Date) <= calendar_end_dt)
-        .group_by(cast(models.AuditLog.created_at - timedelta(hours=5), Date))
-        .order_by(cast(models.AuditLog.created_at - timedelta(hours=5), Date))
+        .group_by(text("1"))
+        .order_by(text("1"))
     )
     calendar_usage_last_7_days = {str(row[0]): row[1] for row in calendar_usage_query.all()}
 
