@@ -118,29 +118,8 @@ async def get_statistics(
     )
     incomplete_count = suspicious_users_query.scalar_one()
 
-    # Rule 2: Duplicate IPs (3+ registrations from same IP today)
-    ip_label = models.AuditLog.metadata_json["ip"].astext.label("ip_addr")
-    duplicate_ips_query = await db.execute(
-        select(ip_label)
-        .where(models.AuditLog.event_type == "user_registration")
-        .where(models.AuditLog.created_at - timedelta(hours=5) >= today_start)
-        .group_by(text("ip_addr"))
-        .having(func.count(models.AuditLog.id) >= 3)
-    )
-    suspicious_ips = [row[0] for row in duplicate_ips_query.all()]
-    
-    ip_users_count = 0
-    if suspicious_ips:
-        ip_count_query = await db.execute(
-            select(func.count(models.AuditLog.id))
-            .where(models.AuditLog.event_type == "user_registration")
-            .where(models.AuditLog.metadata_json["ip"].astext.in_(suspicious_ips))
-            .where(models.AuditLog.created_at - timedelta(hours=5) >= today_start)
-        )
-        ip_users_count = ip_count_query.scalar_one()
-
-    # Combine metrics (using max as a simple overlapping heuristic)
-    suspicious_registrations_count = max(incomplete_count, ip_users_count)
+    # Combine metrics (only incomplete profiles for now)
+    suspicious_registrations_count = incomplete_count
     
     # 3.4 Decoupled ranges
     # Failed Logins Range
