@@ -119,11 +119,12 @@ async def get_statistics(
     incomplete_count = suspicious_users_query.scalar_one()
 
     # Rule 2: Duplicate IPs (3+ registrations from same IP today)
+    ip_label = models.AuditLog.metadata_json["ip"].astext.label("ip_addr")
     duplicate_ips_query = await db.execute(
-        select(models.AuditLog.metadata_json["ip"].astext)
+        select(ip_label)
         .where(models.AuditLog.event_type == "user_registration")
         .where(models.AuditLog.created_at - timedelta(hours=5) >= today_start)
-        .group_by(models.AuditLog.metadata_json["ip"].astext)
+        .group_by(text("ip_addr"))
         .having(func.count(models.AuditLog.id) >= 3)
     )
     suspicious_ips = [row[0] for row in duplicate_ips_query.all()]
