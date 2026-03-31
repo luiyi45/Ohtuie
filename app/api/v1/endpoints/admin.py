@@ -218,8 +218,8 @@ async def get_statistics(
     )
     registrations_month = registrations_month_query.scalar_one()
 
-    new_users_month_percentage = round((registrations_month / total_users) * 100, 1) if total_users > 0 else 0.0
-    activity_today_percentage = round((logged_in_today / total_users) * 100, 1) if total_users > 0 else 0.0
+    new_users_month_percentage = min(round((registrations_month / total_users) * 100, 1), 100.0) if total_users > 0 else 0.0
+    activity_today_percentage = min(round((logged_in_today / total_users) * 100, 1), 100.0) if total_users > 0 else 0.0
 
     # 9. Recent Failed Logins (last 3 for summary, last 24h)
     yesterday_24h = datetime.now(timezone.utc) - timedelta(days=1)
@@ -236,7 +236,7 @@ async def get_statistics(
         recent_failed_logins.append({
             "email": log.metadata_json.get("email", "Desconocido") if log.metadata_json else "Desconocido",
             "ip_address": log.metadata_json.get("ip", "N/A") if log.metadata_json else "N/A",
-            "timestamp": log.created_at.strftime("%H:%M") # HH:mm format for recent alerts
+            "timestamp": (log.created_at - timedelta(hours=5)).strftime("%H:%M") # UTC-5, 24h format
         })
 
     return {
