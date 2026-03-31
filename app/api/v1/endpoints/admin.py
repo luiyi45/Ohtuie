@@ -490,14 +490,12 @@ async def get_data_analysis(
     calendar_count = (await db.execute(select(func.count(models.Cycle.id)))).scalar_one()
     symptoms_count = (await db.execute(select(func.count(models.DailyLog.id)).where(models.DailyLog.symptoms != None))).scalar_one()
     predictions_count = (await db.execute(select(func.count(models.AuditLog.id)).where(models.AuditLog.description.contains("prediccion")))).scalar_one()
-    community_count = (await db.execute(select(func.count(models.AuditLog.id)).where(models.AuditLog.description.contains("comunidad")))).scalar_one()
 
     # Ensure some data exists for the chart even if DB is new
     engagement = {
         "Calendario": calendar_count or 40,
         "Síntomas": symptoms_count or 25,
-        "Predicciones": predictions_count or 20,
-        "Comunidad": community_count or 15
+        "Predicciones": predictions_count or 20
     }
 
     # 3. Conversion Funnel
