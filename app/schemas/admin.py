@@ -42,3 +42,10 @@ class AuditLogCreate(BaseModel):
     event_type: str
     description: str
     metadata_json: Optional[Dict[str, Any]] = None
+
+class DataAnalysis(BaseModel):
+    user_pulse: Dict[str, Any]
+    engagement: Dict[str, int]
+    funnel: List[Dict[str, Any]]
+    sentiment: Dict[str, Any]
+    msg: Optional[str] = None
