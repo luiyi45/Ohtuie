@@ -581,17 +581,18 @@ async def get_data_analysis(
                 symptom_counts[s] = symptom_counts.get(s, 0) + 1
     
     translations = {
-        "cramps": "Cólicos", "headache": "Dolor de cabeza", "bloating": "Hinchazón",
-        "tender breasts": "Senos sensibles", "acne": "Acné", "fatigue": "Fatiga",
-        "nausea": "Náuseas", "insomnia": "Insomnio", "back pain": "Dolor de espalda",
+        "cramps": "Cólicos", "headache": "Dolor de cabeza", "aching_head": "Dolor de cabeza",
+        "bloating": "Hinchazón", "tender breasts": "Senos sensibles", "acne": "Acné", 
+        "fatigue": "Fatiga", "nausea": "Náuseas", "insomnia": "Insomnio", 
+        "back pain": "Dolor de espalda", "add_weight": "Aumento de peso",
         "happy": "Felicidad", "stable": "Estable", "energetic": "Enérgica", "calm": "Calma",
         "irritable": "Irritable", "sad": "Triste", "anxious": "Ansiosa", 
-        "depressed": "Deprimida", "frustrated": "Frustrada", "tired": "Cansada",
-        "diarrhea": "Diarrea", "constipation": "Estreñimiento", "dizziness": "Mareos"
+        "depressed": "Deprimida", "frustrated": "Frustrada", "tired": "Cansada"
     }
     
     sorted_tags = sorted(symptom_counts.items(), key=lambda x: x[1], reverse=True)
-    tags = [translations.get(t[0].lower(), t[0]) for t in sorted_tags[:4]]
+    # Safe translation with fallback: remove underscore and capitalize if not in map
+    tags = [translations.get(t[0].lower(), t[0].replace('_', ' ').capitalize()) for t in sorted_tags[:4]]
     if not tags: tags = ["General", "Precisión", "Interfaz", "Privacidad"]
 
     sentiment = {
