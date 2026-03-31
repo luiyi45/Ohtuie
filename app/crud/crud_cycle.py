@@ -31,8 +31,7 @@ class CRUDCycle(CRUDBase[Cycle, CycleCreate, CycleUpdate]):
             select(Cycle)
             .filter(
                 Cycle.user_id == user_id,
-                extract('month', Cycle.start_date) == obj_in.start_date.month,
-                extract('year', Cycle.start_date) == obj_in.start_date.year
+                Cycle.start_date == obj_in.start_date
             )
         )
         existing_cycle = result.scalars().first()
