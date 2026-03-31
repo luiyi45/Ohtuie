@@ -475,7 +475,7 @@ async def get_data_analysis(
     returned_users = returned_query.scalar_one()
     
     retention_w1 = int((returned_users / total_joined_cohort) * 100)
-    if retention_w1 == 0: retention_w1 = 68 # Real-ish mock if no data yet for cohort
+    # Removing mock fallback to show real data as requested
     
     # Satisfaction Proxy: Positivity in moods (happy/excellent in JSON)
     mood_query = await db.execute(select(models.DailyLog.moods))
@@ -505,10 +505,17 @@ async def get_data_analysis(
     predictions_count = (await db.execute(select(func.count(models.AuditLog.id)).where(models.AuditLog.description.contains("prediccion")))).scalar_one()
 
     # Ensure some data exists for the chart even if DB is new
+    total_eng = calendar_count + symptoms_count + predictions_count or 1
+    
+    # Ensure percentages sum to exactly 100%
+    p1 = int((calendar_count / total_eng) * 100)
+    p2 = int((symptoms_count / total_eng) * 100)
+    p3 = 100 - p1 - p2
+    
     engagement = {
-        "Calendario": calendar_count or 40,
-        "Síntomas": symptoms_count or 25,
-        "Predicciones": predictions_count or 20
+        "Calendario": {"count": calendar_count, "percent": p1},
+        "Síntomas": {"count": symptoms_count, "percent": p2},
+        "Predicciones": {"count": predictions_count, "percent": p3}
     }
 
     # 3. Conversion Funnel
@@ -539,7 +546,10 @@ async def get_data_analysis(
     mood_map = {
         "happy": "pos", "stable": "neu", "energetic": "pos", "calm": "neu",
         "irritable": "crit", "sad": "crit", "cramps": "crit", "anxious": "crit",
-        "depressed": "crit", "frustrated": "crit", "tired": "crit"
+        "depressed": "crit", "frustrated": "crit", "tired": "crit",
+        "felicidad": "pos", "estable": "neu", "enérgica": "pos", "calma": "neu",
+        "irritable": "crit", "triste": "crit", "cólicos": "crit", "ansiosa": "crit",
+        "deprimida": "crit", "frustrada": "crit", "cansada": "crit"
     }
     
     for m_list in mood_lists:
@@ -573,7 +583,11 @@ async def get_data_analysis(
     translations = {
         "cramps": "Cólicos", "headache": "Dolor de cabeza", "bloating": "Hinchazón",
         "tender breasts": "Senos sensibles", "acne": "Acné", "fatigue": "Fatiga",
-        "nausea": "Náuseas", "insomnia": "Insomnio", "back pain": "Dolor de espalda"
+        "nausea": "Náuseas", "insomnia": "Insomnio", "back pain": "Dolor de espalda",
+        "happy": "Felicidad", "stable": "Estable", "energetic": "Enérgica", "calm": "Calma",
+        "irritable": "Irritable", "sad": "Triste", "anxious": "Ansiosa", 
+        "depressed": "Deprimida", "frustrated": "Frustrada", "tired": "Cansada",
+        "diarrhea": "Diarrea", "constipation": "Estreñimiento", "dizziness": "Mareos"
     }
     
     sorted_tags = sorted(symptom_counts.items(), key=lambda x: x[1], reverse=True)
