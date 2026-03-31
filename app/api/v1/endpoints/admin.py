@@ -511,14 +511,52 @@ async def get_data_analysis(
         {"label": "Usuaria Activa", "value": f"{int((active_last_month/total_u)*100)}%", "color": "0xFFC5CAE9"}
     ]
 
-    # 4. Sentiment
+    # 4. Sentiment (Real Moods & Symptoms Aggregation)
+    all_moods_for_sentiment = await db.execute(select(models.DailyLog.moods))
+    mood_lists = all_moods_for_sentiment.scalars().all()
+    
+    pos, neu, crit, grand_total = 0, 0, 0, 0
+    mood_map = {
+        "happy": "pos", "stable": "neu", "energetic": "pos", "calm": "neu",
+        "irritable": "crit", "sad": "crit", "cramps": "crit", "anxious": "crit",
+        "depressed": "crit", "frustrated": "crit", "tired": "crit"
+    }
+    
+    for m_list in mood_lists:
+        if m_list:
+            for m in m_list:
+                m_lower = m.lower()
+                grand_total += 1
+                cat = mood_map.get(m_lower, "neu")
+                if cat == "pos": pos += 1
+                elif cat == "neu": neu += 1
+                else: crit += 1
+    
+    if grand_total == 0:
+        sentiment_metrics = {"Positive": 70, "Neutral": 20, "Critical": 10} # Better fallback
+    else:
+        sentiment_metrics = {
+            "Positive": int((pos/grand_total)*100),
+            "Neutral": int((neu/grand_total)*100),
+            "Critical": int((crit/grand_total)*100)
+        }
+
+    # Dynamic Tags from common symptoms
+    all_symptoms_query = await db.execute(select(models.DailyLog.symptoms).where(models.DailyLog.symptoms != None))
+    symptom_lists = all_symptoms_query.scalars().all()
+    symptom_counts = {}
+    for lines in symptom_lists:
+        if lines:
+            for s in lines:
+                symptom_counts[s] = symptom_counts.get(s, 0) + 1
+    
+    sorted_tags = sorted(symptom_counts.items(), key=lambda x: x[1], reverse=True)
+    tags = [t[0] for t in sorted_tags[:4]]
+    if not tags: tags = ["General", "Precisión", "Diseño", "Privacidad"]
+
     sentiment = {
-        "metrics": {
-            "Positive": 72,
-            "Neutral": 20,
-            "Critical": 8
-        },
-        "tags": ["Precisión", "Diseño UI", "Carga rápida", "Privacidad"]
+        "metrics": sentiment_metrics,
+        "tags": tags
     }
 
     return {
