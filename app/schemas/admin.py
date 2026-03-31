@@ -22,6 +22,8 @@ class AdminStatistics(BaseModel):
     failed_logins: List[Dict[str, Any]] = []
     blocked_users_count: int = 0
     logged_in_today: int = 0
+    new_users_month_percentage: float = 0.0
+    activity_today_percentage: float = 0.0
 
 class SecurityAuditLogEntry(BaseModel):
     id: UUID

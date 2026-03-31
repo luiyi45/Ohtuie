@@ -210,6 +210,17 @@ async def get_statistics(
     )
     logged_in_today = logged_in_today_query.scalar_one()
 
+    # 8.6 Registrations this month (UTC-5)
+    month_start = today_now_local.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    registrations_month_query = await db.execute(
+        select(func.count(models.User.id))
+        .where(models.User.role == "user", models.User.created_at - timedelta(hours=5) >= month_start)
+    )
+    registrations_month = registrations_month_query.scalar_one()
+
+    new_users_month_percentage = round((registrations_month / total_users) * 100, 1) if total_users > 0 else 0.0
+    activity_today_percentage = round((logged_in_today / total_users) * 100, 1) if total_users > 0 else 0.0
+
     # 9. Recent Failed Logins (last 3 for summary, last 24h)
     yesterday_24h = datetime.now(timezone.utc) - timedelta(days=1)
     recent_failed_logins_query = await db.execute(
@@ -247,6 +258,8 @@ async def get_statistics(
         "failed_logins": recent_failed_logins, # For Global Reports list
         "blocked_users_count": blocked_users_count,
         "logged_in_today": logged_in_today,
+        "new_users_month_percentage": new_users_month_percentage,
+        "activity_today_percentage": activity_today_percentage,
     }
 
 @router.get("/security-stats", response_model=schemas.SecurityStatistics)
