@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .title { color: #d32f2f; font-size: 20px; font-weight: bold; text-align: center; }
+        .content { margin: 20px 0; line-height: 1.6; }
+        .warning-box {
+            background-color: #ffebee;
+            border-left: 5px solid #d32f2f;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #b71c1c;
+        }
+        .info-box {
+            background-color: #e8f5e9;
+            border-left: 5px solid #388e3c;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #1b5e20;
+        }
+        .footer { font-size: 12px; color: #777; text-align: center; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="color: #2c3e50; margin: 0;">OHTUIE</h1>
+            <p style="font-size: 12px; color: #888; margin-top: 5px;">SISTEMA DE GESTIÓN<br>DE PERIODO</p>
+        </div>
+
+        <div class="title">Solicitud de Eliminación de Cuenta</div>
+
+        <div class="content">
+            Hola {{ user_full_name }},<br><br>
+            Hemos recibido tu solicitud para eliminar tu cuenta en OHTUIE. Queremos informarte sobre el proceso que sigue a continuación.
+        </div>
+
+        <div class="warning-box">
+            Tu cuenta y todos los datos asociados han sido movidos a la papelera. En exactamente <strong>30 días</strong>, serán eliminados de manera permanente e irreversible de nuestros servidores.
+        </div>
+
+        <div class="info-box">
+            <strong>¿Cambiaste de opinión?</strong><br>
+            Puedes cancelar esta acción en cualquier momento antes de que finalice el plazo de 30 días. Simplemente vuelve a <strong>iniciar sesión</strong> en la aplicación con tu correo electrónico y contraseña, y tu cuenta será restaurada automáticamente.
+        </div>
+
+        <div class="content">
+            Si no fuiste tú quien realizó esta solicitud, te recomendamos iniciar sesión de inmediato y cambiar tu contraseña.
+        </div>
+
+        <div class="footer">
+            &copy; 2026 OHTUIE - Sistema de Gestión de Ciclo Menstrual
+        </div>
+    </div>
+</body>
+</html>

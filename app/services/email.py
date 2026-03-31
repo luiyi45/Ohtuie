@@ -45,3 +45,35 @@ async def send_password_recovery_email(email_to: str, full_name: str, code: str)
     except Exception as e:
         print(f"ERROR: Failed to send email via Brevo to {email_to}: {e}")
         return False
+
+async def send_account_deletion_warning_email(email_to: str, full_name: str):
+    template = env.get_template("account_deletion.html")
+    html_content = template.render(
+        user_full_name=full_name
+    )
+    
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "api-key": settings.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    payload = {
+        "sender": {"name": settings.EMAILS_FROM_NAME, "email": settings.EMAILS_FROM_EMAIL},
+        "to": [{"email": email_to}],
+        "subject": "Solicitud de Eliminación de Cuenta - OHTUIE",
+        "htmlContent": html_content
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(url, headers=headers, json=payload)
+            
+        if response.status_code in [200, 201, 202]:
+            return True
+        else:
+            print(f"ERROR: Brevo API error {response.status_code}: {response.text}")
+            return False
+    except Exception as e:
+        print(f"ERROR: Failed to send email via Brevo to {email_to}: {e}")
+        return False

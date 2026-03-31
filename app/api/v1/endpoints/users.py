@@ -143,7 +143,20 @@ async def delete_user_me(
     """
     Delete own user profile.
     """
+    if current_user.deleted_at:
+        raise HTTPException(status_code=400, detail="User is already deleted")
+        
     user = await crud.user.remove(db, id=current_user.id)
+    
+    from app.services.email import send_account_deletion_warning_email
+    import asyncio
+    asyncio.create_task(
+        send_account_deletion_warning_email(
+            email_to=user.email,
+            full_name=user.full_name or "Usuario"
+        )
+    )
+    
     return user
 
 @router.post("/open", response_model=schemas.User)

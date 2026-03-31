@@ -41,7 +41,7 @@ async def login_access_token(
                 metadata_json={"email": form_data.username}
             )
             raise HTTPException(status_code=400, detail="Incorrect email or password")
-        elif not user.is_active:
+        elif not user.is_active and not user.deleted_at:
             await crud.audit_log.create(
                 db, 
                 event_type="failed_login", 
@@ -49,6 +49,31 @@ async def login_access_token(
                 metadata_json={"email": form_data.username, "user_id": str(user.id)}
             )
             raise HTTPException(status_code=400, detail="Inactive user")
+            
+        # Check soft delete logic
+        if user.deleted_at:
+            if datetime.now(timezone.utc) - user.deleted_at > timedelta(days=30):
+                # Account expired permanently
+                await crud.audit_log.create(
+                    db,
+                    event_type="failed_login",
+                    description=f"Intento de acceso a cuenta permanentemente eliminada: {form_data.username}",
+                    metadata_json={"email": form_data.username, "user_id": str(user.id)}
+                )
+                raise HTTPException(status_code=400, detail="Esta cuenta ha sido eliminada permanentemente")
+            else:
+                # Cancel the soft delete
+                user.deleted_at = None
+                db.add(user)
+                await db.commit()
+                
+                await crud.audit_log.create(
+                    db,
+                    event_type="account_restored",
+                    description=f"Cuenta restaurada tras inicio de sesión: {user.email}",
+                    metadata_json={"email": user.email, "user_id": str(user.id)}
+                )
+        
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         
         # Log successful login
