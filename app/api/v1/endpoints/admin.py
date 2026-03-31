@@ -502,13 +502,20 @@ async def get_data_analysis(
     total_u = (await db.execute(select(func.count(models.User.id)).where(models.User.role == "user"))).scalar_one() or 1
     profile_complete = (await db.execute(select(func.count(models.User.id)).where(models.User.role == "user", models.User.birthday != None))).scalar_one()
     first_symptom = (await db.execute(select(func.count(models.DailyLog.user_id.distinct())))).scalar_one()
-    active_last_month = (await db.execute(select(func.count(models.AuditLog.id.distinct())).where(models.AuditLog.event_type == "login", models.AuditLog.created_at >= now - timedelta(days=30)))).scalar_one()
+    
+    # Correction: Use distinct user_id from metadata_json to count UNIQUE active users, not sessions
+    active_last_month_query = await db.execute(
+        select(func.count(models.User.id.distinct()))
+        .join(models.AuditLog, models.User.id.cast(String) == models.AuditLog.metadata_json["user_id"].astext)
+        .where(models.AuditLog.event_type == "login", models.AuditLog.created_at >= now - timedelta(days=30))
+    )
+    active_last_month = active_last_month_query.scalar_one()
 
     funnel = [
         {"label": "Registros", "value": "100%", "color": "0xFF5C6BC0"},
-        {"label": "Perfil Completo", "value": f"{int((profile_complete/total_u)*100)}%", "color": "0xFF7986CB"},
-        {"label": "Primer Síntoma", "value": f"{int((first_symptom/total_u)*100)}%", "color": "0xFF9FA8DA"},
-        {"label": "Usuaria Activa", "value": f"{int((active_last_month/total_u)*100)}%", "color": "0xFFC5CAE9"}
+        {"label": "Perfil Completo", "value": f"{min(int((profile_complete/total_u)*100), 100)}%", "color": "0xFF7986CB"},
+        {"label": "Primer Síntoma", "value": f"{min(int((first_symptom/total_u)*100), 100)}%", "color": "0xFF9FA8DA"},
+        {"label": "Usuaria Activa", "value": f"{min(int((active_last_month/total_u)*100), 100)}%", "color": "0xFFC5CAE9"}
     ]
 
     # 4. Sentiment (Real Moods & Symptoms Aggregation)
@@ -550,9 +557,15 @@ async def get_data_analysis(
             for s in lines:
                 symptom_counts[s] = symptom_counts.get(s, 0) + 1
     
+    translations = {
+        "cramps": "Cólicos", "headache": "Dolor de cabeza", "bloating": "Hinchazón",
+        "tender breasts": "Senos sensibles", "acne": "Acné", "fatigue": "Fatiga",
+        "nausea": "Náuseas", "insomnia": "Insomnio", "back pain": "Dolor de espalda"
+    }
+    
     sorted_tags = sorted(symptom_counts.items(), key=lambda x: x[1], reverse=True)
-    tags = [t[0] for t in sorted_tags[:4]]
-    if not tags: tags = ["General", "Precisión", "Diseño", "Privacidad"]
+    tags = [translations.get(t[0].lower(), t[0]) for t in sorted_tags[:4]]
+    if not tags: tags = ["General", "Precisión", "Interfaz", "Privacidad"]
 
     sentiment = {
         "metrics": sentiment_metrics,
