@@ -47,7 +47,7 @@ class AuditLogCreate(BaseModel):
 
 class DataAnalysis(BaseModel):
     user_pulse: Dict[str, Any]
-    engagement: Dict[str, int]
+    engagement: Dict[str, Any]
     funnel: List[Dict[str, Any]]
     sentiment: Dict[str, Any]
     msg: Optional[str] = None
