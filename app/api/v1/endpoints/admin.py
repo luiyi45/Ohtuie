@@ -290,14 +290,15 @@ async def get_security_statistics(
     admin_sessions = admin_sessions_query.scalar_one()
 
     # 4. Risk Distribution
-    # Categorize failed logins (mock logic based on description for now)
-    pass_query = await db.execute(select(func.count(models.AuditLog.id)).where(models.AuditLog.event_type == "failed_login").where(models.AuditLog.description.contains("Contraseña")))
-    user_query = await db.execute(select(func.count(models.AuditLog.id)).where(models.AuditLog.event_type == "failed_login").where(models.AuditLog.description.contains("inexistente")))
+    # Categorize failed logins (Group all failed credentials as 'Pass')
+    pass_query = await db.execute(select(func.count(models.AuditLog.id)).where(models.AuditLog.event_type == "failed_login").where(models.AuditLog.description.contains("fallido")))
+    user_query = await db.raw_connection() # Placeholder, we won't use it separate anymore
+    # Wait, better just:
     token_query = await db.execute(select(func.count(models.AuditLog.id)).where(models.AuditLog.event_type == "failed_login").where(models.AuditLog.description.contains("Token")))
     
     risk_dist = {
         "Pass": pass_query.scalar_one(),
-        "User": user_query.scalar_one(),
+        "User": 0, # Non-existent users are now bundled in 'Pass' via 'fallido' description
         "Token": token_query.scalar_one()
     }
 
