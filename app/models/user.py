@@ -14,6 +14,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     full_name = Column(String)
     birthday = Column(DateTime(timezone=True), nullable=True)
+    avatar_id = Column(String, nullable=True)
     role = Column(String, default="user", nullable=False) # admin, user
     cycle_duration = Column(Integer, nullable=True)
     period_duration = Column(Integer, nullable=True)
