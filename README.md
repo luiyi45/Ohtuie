@@ -110,4 +110,8 @@ git push
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+© 2026 **Sara Sofia Romero Hoyos** y **Luisa Fernanda Gomez Ospino**.
+
+
+Todos los derechos reservados. El diseño de interfaz, la arquitectura de seguridad y el código fuente contenido en este repositorio son propiedad intelectual de sus autoras. No se permite su reproducción total o parcial sin autorización expresa.
+
