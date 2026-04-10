@@ -18,6 +18,7 @@ OHTUIE is a robust backend API built with **FastAPI**, designed to manage menstr
 - **ORM**: [SQLAlchemy 2.0](https://www.sqlalchemy.org/)
 - **Validation**: [Pydantic v2](https://docs.pydantic.dev/)
 - **Security**: [Jose](https://python-jose.readthedocs.io/en/latest/) (JWT), [Passlib](https://passlib.readthedocs.io/) (bcrypt)
+-**Deployment Link** : https://ohtuie-production.up.railway.app
 
 ## 📂 Project Structure
 
@@ -42,7 +43,7 @@ OHTUIE/
 
 ### 1. Clone the repository
 ```bash
-git clone <repository-url>
+git clone (https://github.com/luiyi45/Ohtuie.git)
 cd OHTUIE
 ```
 
